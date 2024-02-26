@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cider4OBS</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+
+<body onload="startWebSocket();">
+  <div id="content">
+    <div id="mainbox">
+      <img id="albumimg" width="84px" height="84px">
+      <div style="padding-left: 10px;">
+        <span id="title">---</span><br>
+        <span id="artist">---</span><br>
+        <span id="album">---</span>
+      </div>
+    </div>
+    <div id="progressBg">
+      <div id="progressBar"></div>
+    </div>
+  </div>
+  <script src="/connector.js"></script>
+</body>
+
+</html>

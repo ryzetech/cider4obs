@@ -1,0 +1,45 @@
+#content {
+  width: 90%;
+  background-color: #55555555;
+  border-radius: 5px;
+  margin: 10px;
+  padding: 10px;
+}
+
+#mainbox {
+  display: flex;
+  align-items: center;
+  justify-content: left;
+}
+
+span {
+  text-overflow: ellipsis;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  color:white;
+}
+
+#albumimg {
+  border-radius: 5px;
+}
+
+#title {
+  font-weight: bold;
+}
+
+#album {
+  font-style: italic;
+}
+
+#progressBg {
+  margin-top: 10px;
+  width: 100%;
+  height: auto;
+  border-radius: 5px;
+  background-color: #55555555;
+}
+
+#progressBar {
+  border-radius: 5px;
+  height: 10px;
+  background-color: #70e000;
+}
