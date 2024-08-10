@@ -16,7 +16,7 @@ function startWebSocket() {
     // why does this work lmao
     setTimeout(() => {
       settings = getSettings();
-    });
+    }, 100);
 
     // Connect to the websocket server
     console.debug('[DEBUG] [Init] Configuring websocket connection...');
