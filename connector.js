@@ -1,6 +1,15 @@
 let pauseTimer;
 let settings;
 
+function sleep(milliseconds) {
+  var start = new Date().getTime();
+  for (var i = 0; i < 1e7; i++) {
+    if ((new Date().getTime() - start) > milliseconds){
+      break;
+    }
+  }
+}
+
 function getVarFromBody(name) { return window.getComputedStyle(document.body).getPropertyValue(name); }
 
 function getSettings() {
@@ -12,8 +21,9 @@ function getSettings() {
 
 function startWebSocket() {
   try {
-    // load settings
-    setTimeout(() => {settings = getSettings();}, 100);
+    // pausing so obs has time to inject the css
+    sleep(100);
+    settings = getSettings();
 
     // Connect to the websocket server
     console.debug('[DEBUG] [Init] Configuring websocket connection...');
@@ -68,9 +78,9 @@ function startWebSocket() {
       setTimeout(startWebSocket, 5000);
     });
   } catch (error) {
-    console.debug('[DEBUG] [Init] Websocket error:', error);
+    console.debug('[DEBUG] [Init] Code error:', error);
     console.debug("[DEBUG] [Init] Retrying in 5 seconds...")
-    setTimeout(startWebSocket, 5000);
+    setTimeout(startWebSocket, 1000);
   }
 }
 function updateComponents(pb) {
