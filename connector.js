@@ -1,3 +1,14 @@
+let pauseTimer;
+let settings = getSettings();
+
+function getVarFromBody(name) { return window.getComputedStyle(document.documentElement).getPropertyValue(name); }
+
+function getSettings() {
+  return {
+    fade_on_stop: getVarFromBody('--fade-on-stop') == "true"
+  }
+}
+
 function startWebSocket() {
   try {
     // Connect to the websocket server
@@ -16,8 +27,20 @@ function startWebSocket() {
 
           if (playbackInfo.data?.status !== undefined || playbackInfo.data?.artwork?.url !== undefined || playbackInfo.data?.name !== undefined) {
             updateComponents(playbackInfo.data);
+            if (pauseTimer) {
+              clearTimeout(pauseTimer);
+              pauseTimer = undefined;
+              document.getElementById("content").style.opacity = 1;
+            }
+
             console.debug(playbackInfo.data);
           } else {
+            // fade out if presumed paused
+            if (!pauseTimer && settings.fade_on_stop) {
+              pauseTimer = setTimeout(() => {
+                document.getElementById("content").style.opacity = 0;
+              }, 2000);
+            }
             console.debug("[DEBUG] [Init] PlaybackInfo is undefined or null, skipping to avoid errors.")
           }
         } catch (error) {

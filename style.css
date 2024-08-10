@@ -4,6 +4,7 @@
   border-radius: 5px;
   margin: 10px;
   padding: 10px;
+  transition: opacity 1s;
 }
 
 #mainbox {

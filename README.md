@@ -12,8 +12,8 @@
 3. The source will spawn with a width of `800` by default. Resize it if necessary (my personal sweet spot is `400`) and change the height to `170` or something like that.
 4. The browser in OBS will now attempt to connect to Cider every five seconds and reestablish the connection if necessary!
 
-## Customization
-Unhappy with the way the app looks by default? You can change the settings with the "Custom CSS" box in the OBS browser source. I have compiled some **examples** below to just copy and change to your liking.
+## Customization & Settings
+Unhappy with the way the app looks and behaves by default? You can change the settings with the "Custom CSS" box in the OBS browser source. I have compiled some **examples** below to just copy and change to your liking.
 
 To pick colors, I recommend https://rgbacolorpicker.com/.
 
@@ -70,6 +70,15 @@ Customizable elements are `#progressBg, #progressBar`.
 /* you can also make the progress bar thicker or thinner: */
 #progressBar {
   height: 15px;
+}
+```
+
+### Settings
+Some settings adjusting the behavior of certain elements.
+```css
+body {
+  /* fade the box in and out depending on whether music is playing or not */
+  --fade-on-stop: true
 }
 ```
 
