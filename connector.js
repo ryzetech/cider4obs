@@ -1,16 +1,19 @@
 let pauseTimer;
-let settings = getSettings();
+let settings;
 
-function getVarFromBody(name) { return window.getComputedStyle(document.documentElement).getPropertyValue(name); }
+function getVarFromBody(name) { return window.getComputedStyle(document.body).getPropertyValue(name); }
 
 function getSettings() {
   return {
-    fade_on_stop: getVarFromBody('--fade-on-stop') == "true"
+    fade_on_stop: getVarFromBody('--fade-on-stop') == 1
   }
 }
 
 function startWebSocket() {
   try {
+    // load settings
+    setTimeout(() => {settings = getSettings();}, 100);
+
     // Connect to the websocket server
     console.debug('[DEBUG] [Init] Configuring websocket connection...');
     const CiderApp = new WebSocket('ws://localhost:10766/ws');

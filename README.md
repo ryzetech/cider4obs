@@ -77,8 +77,9 @@ Customizable elements are `#progressBg, #progressBar`.
 Some settings adjusting the behavior of certain elements.
 ```css
 body {
+  /* general key: 1=on, 0=off */
   /* fade the box in and out depending on whether music is playing or not */
-  --fade-on-stop: true
+  --fade-on-stop: 1
 }
 ```
 
