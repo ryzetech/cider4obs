@@ -1,15 +1,6 @@
 let pauseTimer;
 let settings;
 
-function sleep(milliseconds) {
-  var start = new Date().getTime();
-  for (var i = 0; i < 1e7; i++) {
-    if ((new Date().getTime() - start) > milliseconds){
-      break;
-    }
-  }
-}
-
 function getVarFromBody(name) { return window.getComputedStyle(document.body).getPropertyValue(name); }
 
 function getSettings() {
@@ -22,8 +13,10 @@ function getSettings() {
 function startWebSocket() {
   try {
     // pausing so obs has time to inject the css
-    sleep(100);
-    settings = getSettings();
+    // why does this work lmao
+    setTimeout(() => {
+      settings = getSettings();
+    });
 
     // Connect to the websocket server
     console.debug('[DEBUG] [Init] Configuring websocket connection...');
