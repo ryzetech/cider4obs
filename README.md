@@ -78,8 +78,12 @@ Some settings adjusting the behavior of certain elements.
 ```css
 body {
   /* general key: 1=on, 0=off */
+  
   /* fade the box in and out depending on whether music is playing or not */
-  --fade-on-stop: 1
+  --fade-on-stop: 1;
+
+  /* how long playback must be paused until the box fades (if enabled) */
+  --fade-delay: 1000;
 }
 ```
 

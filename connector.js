@@ -5,7 +5,8 @@ function getVarFromBody(name) { return window.getComputedStyle(document.body).ge
 
 function getSettings() {
   return {
-    fade_on_stop: getVarFromBody('--fade-on-stop') == 1
+    fade_on_stop: getVarFromBody('--fade-on-stop') == 1,
+    fade_delay: getVarFromBody('--fade-delay') || 2000,
   }
 }
 
