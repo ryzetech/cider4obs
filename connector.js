@@ -1,5 +1,23 @@
+let pauseTimer;
+let settings;
+
+function getVarFromBody(name) { return window.getComputedStyle(document.body).getPropertyValue(name); }
+
+function getSettings() {
+  return {
+    fade_on_stop: getVarFromBody('--fade-on-stop') == 1,
+    fade_delay: getVarFromBody('--fade-delay') || 2000,
+  }
+}
+
 function startWebSocket() {
   try {
+    // pausing so obs has time to inject the css
+    // why does this work lmao
+    setTimeout(() => {
+      settings = getSettings();
+    }, 100);
+
     // Connect to the websocket server
     console.debug('[DEBUG] [Init] Configuring websocket connection...');
     const CiderApp = new WebSocket('ws://localhost:10766/ws');
@@ -16,8 +34,20 @@ function startWebSocket() {
 
           if (playbackInfo.data?.status !== undefined || playbackInfo.data?.artwork?.url !== undefined || playbackInfo.data?.name !== undefined) {
             updateComponents(playbackInfo.data);
+            if (pauseTimer) {
+              clearTimeout(pauseTimer);
+              pauseTimer = undefined;
+              document.getElementById("content").style.opacity = 1;
+            }
+
             console.debug(playbackInfo.data);
           } else {
+            // fade out if presumed paused
+            if (!pauseTimer && settings.fade_on_stop) {
+              pauseTimer = setTimeout(() => {
+                document.getElementById("content").style.opacity = 0;
+              }, settings.fade_delay);
+            }
             console.debug("[DEBUG] [Init] PlaybackInfo is undefined or null, skipping to avoid errors.")
           }
         } catch (error) {
@@ -41,9 +71,9 @@ function startWebSocket() {
       setTimeout(startWebSocket, 5000);
     });
   } catch (error) {
-    console.debug('[DEBUG] [Init] Websocket error:', error);
+    console.debug('[DEBUG] [Init] Code error:', error);
     console.debug("[DEBUG] [Init] Retrying in 5 seconds...")
-    setTimeout(startWebSocket, 5000);
+    setTimeout(startWebSocket, 1000);
   }
 }
 function updateComponents(pb) {
