@@ -77,15 +77,27 @@ Customizable elements are `#progressBg, #progressBar`.
 Some settings adjusting the behavior of certain elements.
 ```css
 body {
-  /* general key: 1=on, 0=off */
+  /* general key unless stated otherwise: 1=on, 0=off */
   
   /* fade the box in and out depending on whether music is playing or not */
   --fade-on-stop: 1;
 
-  /* how long playback must be paused until the box fades (if enabled) */
+  /* how long playback must be paused in milliseconds until the box fades (if enabled) */
   --fade-delay: 1000;
+
+  /* determines if you want to opt out of telemetry */
+  --disable-telemetry: 0;
 }
 ```
+
+## Telemetry
+Your data is very important to me.  
+To understand how I could make the app better, I'm only gathering the following data:
+- the OBS browser plugin version
+- your custom CSS config (if any)
+- occurred errors
+
+This behavior is **opt-out** as this dataset does not contain any personal or identifiable information. To opt out, set `--diable-telemetry: 1;`.
 
 ## Issues, Ideas, Comments?
 Tell me in the issues tab! <3

@@ -4,10 +4,17 @@ let settings;
 function getVarFromBody(name) { return window.getComputedStyle(document.body).getPropertyValue(name); }
 
 function getSettings() {
-  return {
+  const set = {
     fade_on_stop: getVarFromBody('--fade-on-stop') == 1,
     fade_delay: getVarFromBody('--fade-delay') || 2000,
+    disable_telemetry: getVarFromBody("--disable-telemetry") == 1,
+  };
+
+  if (!set.disable_telemetry) {
+    
   }
+
+  return set;
 }
 
 function startWebSocket() {
