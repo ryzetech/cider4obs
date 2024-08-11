@@ -38,7 +38,7 @@ function startWebSocket() {
 
           if (playbackInfo.data?.status !== undefined || playbackInfo.data?.artwork?.url !== undefined || playbackInfo.data?.name !== undefined) {
             updateComponents(playbackInfo.data);
-            if (pauseTimer) {
+            if (pauseTimer && playbackInfo.data?.isPlaying) {
               clearTimeout(pauseTimer);
               pauseTimer = undefined;
               document.getElementById("content").style.opacity = 1;
@@ -46,8 +46,7 @@ function startWebSocket() {
 
             // console.debug(playbackInfo.data);
           } else {
-            // fade out if presumed paused
-            if (!pauseTimer && settings.fade_on_stop) {
+            if (!playbackInfo.data?.isPlaying && !pauseTimer && settings.fade_on_stop) {
               pauseTimer = setTimeout(() => {
                 document.getElementById("content").style.opacity = 0;
               }, settings.fade_delay);
