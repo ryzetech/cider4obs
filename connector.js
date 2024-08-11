@@ -21,10 +21,14 @@ function startWebSocket() {
     // Connect to the websocket server
     console.debug('[DEBUG] [Init] Configuring websocket connection...');
     const CiderApp = new WebSocket('ws://localhost:10766/ws');
-    console.debug('[DEBUG] [Init] Websocket connection established!');
-    document.getElementById("title").innerText = "Cider4OBS Connector | Connection established!";
-    document.getElementById("artist").innerText = "Start playing something!";
-    document.getElementById("album").innerText = "-/-"
+    window.app = CiderApp;
+
+    CiderApp.addEventListener("open", (event) => {
+      console.debug('[DEBUG] [Init] Websocket connection established!');
+      document.getElementById("title").innerText = "Cider4OBS Connector | Connection established!";
+      document.getElementById("artist").innerText = "Start playing something!";
+      document.getElementById("album").innerText = "-/-";
+    });
 
     // Set up websocket artwork/information handling
     CiderApp.addEventListener("message", (event) => {
@@ -40,7 +44,7 @@ function startWebSocket() {
               document.getElementById("content").style.opacity = 1;
             }
 
-            console.debug(playbackInfo.data);
+            // console.debug(playbackInfo.data);
           } else {
             // fade out if presumed paused
             if (!pauseTimer && settings.fade_on_stop) {
@@ -48,24 +52,25 @@ function startWebSocket() {
                 document.getElementById("content").style.opacity = 0;
               }, settings.fade_delay);
             }
-            console.debug("[DEBUG] [Init] PlaybackInfo is undefined or null, skipping to avoid errors.")
+            console.debug("[DEBUG] [WS] PlaybackInfo is undefined or null, skipping to avoid errors.")
+            console.debug(event)
           }
         } catch (error) {
-          console.debug('[DEBUG] [Init] Websocket parsing error:', error);
+          console.debug('[DEBUG] [WS] Websocket parsing error:', error);
         }
       } else {
-        console.log("[DEBUG] [Init] Websocket message is undefined or null, skipping.")
+        console.log("[DEBUG] [WS] Websocket message is undefined or null, skipping.")
       }
     });
     CiderApp.addEventListener("close", (event) => {
-      document.getElementById("title").innerText = "Cider4OBS Connector | Connection closed! Retrying...";
+      document.getElementById("title").innerText = "Cider4OBS Connector | Connection failed! Retrying...";
       document.getElementById("artist").innerText = "Are you sure Cider (version 2.3 and above) is running and you have WebSockets enabled? (Settings > Connectivity > WebSockets API)";
       document.getElementById("album").innerText = "-/-"
       console.debug('[DEBUG] [Init] Websocket connection closed!');
       console.debug("[DEBUG] [Init] Retrying in 5 seconds...")
       setTimeout(startWebSocket, 5000);
     });
-    CiderApp.addEventListener("error", (event) => {
+    CiderApp.addEventListener("error", (error) => {
       console.debug('[DEBUG] [Init] Websocket error:', error);
       console.debug("[DEBUG] [Init] Retrying in 5 seconds...")
       setTimeout(startWebSocket, 5000);
@@ -84,6 +89,6 @@ function updateComponents(pb) {
   let aw = pb.artwork;
   let tmp = aw.url.replace("{w}", aw.width);
   tmp = tmp.replace("{h}", aw.height);
-  console.debug(tmp);
+  // console.debug(tmp);
   document.getElementById("albumimg").src = tmp;
 }
