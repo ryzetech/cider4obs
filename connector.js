@@ -46,7 +46,7 @@ function startWebSocket() {
             if (!pauseTimer && settings.fade_on_stop) {
               pauseTimer = setTimeout(() => {
                 document.getElementById("content").style.opacity = 0;
-              }, 2000);
+              }, settings.fade_delay);
             }
             console.debug("[DEBUG] [Init] PlaybackInfo is undefined or null, skipping to avoid errors.")
           }
