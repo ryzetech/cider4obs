@@ -91,13 +91,10 @@ body {
 ```
 
 ## Telemetry
-Your data is very important to me.  
-To understand how I could make the app better, I'm only gathering the following data:
-- the OBS browser plugin version
-- your custom CSS config (if any)
-- occurred errors
+Your data is extremely important to me. In order to understand view spikes, load times, occurring errors and other potential issues, I'm using Cloudflare Web Analytics.
+Web Analytics collects the minimum amount of information - timing metrics - to show me how this service performs. Cloudflare will not track you and is specifically instructed not to do so.
 
-This behavior is **opt-out** as this dataset does not contain any personal or identifiable information. To opt out, set `--diable-telemetry: 1;`.
+This behavior is **opt-out** as this dataset does not contain any personal or identifiable information. To opt out, set `--diable-telemetry: 1;` as shown above.
 
 ## Issues, Ideas, Comments?
 Tell me in the issues tab! <3

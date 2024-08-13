@@ -11,7 +11,9 @@ function getSettings() {
   };
 
   if (!set.disable_telemetry) {
-    
+    const cf = document.createElement("script");
+    cf.src = "https://static.cloudflareinsights.com/beacon.min.js";
+    document.body.appendChild(cf);
   }
 
   return set;
@@ -20,10 +22,11 @@ function getSettings() {
 function startWebSocket() {
   try {
     // pausing so obs has time to inject the css
-    // why does this work lmao
-    setTimeout(() => {
-      settings = getSettings();
-    }, 100);
+    if (!settings) {
+      setTimeout(() => {
+        settings = getSettings();
+      }, 100);
+    }
 
     // Connect to the websocket server
     console.debug('[DEBUG] [Init] Configuring websocket connection...');
