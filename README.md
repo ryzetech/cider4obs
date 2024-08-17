@@ -3,14 +3,15 @@
 
 ## ❗ Requirements
 * [Open Broadcaster Software](https://obsproject.com/)
-* [Cider 2.3+](https://cider.sh)
+* [Cider 2.5+](https://cider.sh)
 * An Apple Music subscription (duh)
 
 ## 🛠 Setup
-1. Setup Cider if you haven't done so already and open the settings. Go to "Connectivity" and scroll down all the way. Enable the Switch "WebSockets API".
+1. Setup Cider if you haven't done so already and open the settings. Go to "Connectivity" and scroll down all the way. Enable the Switch "WebSockets API". This isn't technically needed anymore, but it's good to have it enabled nevertheless.
 2. Create a new Browser Source in OBS and set the URL to [`https://ryzetech.github.io/cider4obs/`](https://ryzetech.github.io/cider4obs/).
 3. The source will spawn with a width of `800` by default. Resize it if necessary (my personal sweet spot is `400`) and change the height to `170` or something like that.
 4. The browser in OBS will now attempt to connect to Cider every five seconds and reestablish the connection if necessary!
+5. If you want to customize how the app is looking, read below. Add the options into the Custom CSS box of OBS!
 
 ## 🎨 Customization & Settings
 Unhappy with the way the app looks and behaves by default? You can change the settings with the "Custom CSS" box in the OBS browser source. I have compiled some **examples** below to just copy and change to your liking.
