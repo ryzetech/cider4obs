@@ -13,9 +13,12 @@
   justify-content: left;
 }
 
+h1, label, span {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
 span {
   text-overflow: ellipsis;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   color:white;
 }
 
