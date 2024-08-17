@@ -85,6 +85,7 @@ function startWebSocket() {
 
     CiderApp.on("connect_error", (error) => {
       document.getElementById("albumimg").src = "c4obs.png";
+      console.debug("[DEBUG] [Init] Connect Error: " + error);
       console.debug("[DEBUG] [Init] Retrying automatically...")
     });
 
