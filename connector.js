@@ -33,7 +33,7 @@ function startWebSocket() {
 
     // Set up websocket artwork/information handling
     CiderApp.on("API:Playback", ({ data, type }) => {
-      // actual data change
+      // data update on play/pause
       if (type == "playbackStatus.playbackStateDidChange") {
         // fade handler
         if (data.state == "paused" && !pauseTimer && settings.fade_on_stop) {
@@ -47,15 +47,11 @@ function startWebSocket() {
           document.getElementById("content").style.opacity = 1;
         }
 
-        // data handler
-        document.getElementById("title").innerText = data.attributes.name; 
-        document.getElementById("artist").innerText = data.attributes.artistName;
-        document.getElementById("album").innerText = data.attributes.albumName;
-        let aw = data.attributes.artwork;
-        let tmp = aw.url.replace("{w}", aw.width);
-        tmp = tmp.replace("{h}", aw.height);
-        // console.debug(tmp);
-        document.getElementById("albumimg").src = tmp;
+        updateComponents(data.attributes);
+      }
+      // data update on "track rollover"
+      else if (type == "playbackStatus.nowPlayingItemDidChange") {
+        updateComponents(data);
       }
       // playback updates
       else if (type == "playbackStatus.playbackTimeDidChange") {
@@ -94,12 +90,11 @@ function startWebSocket() {
     console.debug("[DEBUG] [Init] Retrying automatically...")
   }
 }
-function updateComponents(pb) {
-  document.getElementById("title").innerText = pb.name;
-  document.getElementById("artist").innerText = pb.artistName;
-  document.getElementById("album").innerText = pb.albumName;
-  document.getElementById("progressBar").style.width = (((pb.currentPlaybackTime / pb.durationInMillis) * 100000) + "%");
-  let aw = pb.artwork;
+function updateComponents(data) {
+  document.getElementById("title").innerText = data.name;
+  document.getElementById("artist").innerText = data.artistName;
+  document.getElementById("album").innerText = data.albumName;
+  let aw = data.artwork;
   let tmp = aw.url.replace("{w}", aw.width);
   tmp = tmp.replace("{h}", aw.height);
   // console.debug(tmp);
