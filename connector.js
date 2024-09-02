@@ -1,4 +1,5 @@
 let pauseTimer;
+let disconnectTimer;
 let settings;
 
 function getVarFromBody(name) { return window.getComputedStyle(document.body).getPropertyValue(name); }
@@ -6,6 +7,7 @@ function getVarFromBody(name) { return window.getComputedStyle(document.body).ge
 function getSettings() {
   return {
     fade_on_stop: getVarFromBody('--fade-on-stop') == 1,
+    fade_on_disconnect: getVarFromBody('--fade-on-disconnect') == 1,
     fade_delay: getVarFromBody('--fade-delay') || 2000,
   }
 }
@@ -29,6 +31,12 @@ function startWebSocket() {
       document.getElementById("title").innerText = "Cider4OBS Connector | Connection established!";
       document.getElementById("artist").innerText = "Start playing something!";
       document.getElementById("album").innerText = "-/-";
+
+      if (disconnectTimer) {
+        clearTimeout(disconnectTimer);
+        disconnectTimer = undefined;
+        document.getElementById("content").style.opacity = 1;
+      }
     });
 
     // Set up websocket artwork/information handling
@@ -76,7 +84,13 @@ function startWebSocket() {
       document.getElementById("album").innerText = "-/-";
       document.getElementById("albumimg").src = "c4obs.png";
       console.debug('[DEBUG] [Init] Socket.io connection closed!');
-      console.debug("[DEBUG] [Init] Retrying automatically...")
+      console.debug("[DEBUG] [Init] Retrying automatically...");
+
+      if (!disconnectTimer && settings.fade_on_disconnect) {
+        disconnectTimer = setTimeout(() => {
+          document.getElementById("content").style.opacity = 0;
+        }, settings.fade_delay);
+      }
     });
 
     CiderApp.on("connect_error", (error) => {
