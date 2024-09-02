@@ -7,7 +7,7 @@
 ![Apple Music](https://img.shields.io/badge/Apple_Music-9933CC?style=for-the-badge&logo=apple-music&logoColor=white)
 ![JavaScript](https://img.shields.io/badge/javascript-%23323330.svg?style=for-the-badge&logo=javascript&logoColor=%23F7DF1E)
 ![Socket.io](https://img.shields.io/badge/Socket.io-black?style=for-the-badge&logo=socket.io&badgeColor=010101)
-![Github Pages](https://img.shields.io/badge/github%20pages-121013?style=for-the-badge&logo=github&logoColor=white)
+![GitHub Pages](https://img.shields.io/badge/github%20pages-121013?style=for-the-badge&logo=github&logoColor=white)
 
 </div>
 
@@ -92,6 +92,9 @@ body {
   
   /* fade the box in and out depending on whether music is playing or not */
   --fade-on-stop: 1;
+
+  /* the box will fade out when Cider disconnects and appears on reconnecting */
+  --fade-on-disconnect: 1;
 
   /* how long playback must be paused in milliseconds until the box fades (if enabled) */
   --fade-delay: 1000;
