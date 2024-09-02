@@ -9,6 +9,7 @@ function getSettings() {
     fade_on_stop: getVarFromBody('--fade-on-stop') == 1,
     fade_on_disconnect: getVarFromBody('--fade-on-disconnect') == 1,
     fade_delay: getVarFromBody('--fade-delay') || 2000,
+    fade_disconnect_delay: getVarFromBody('--fade-disconnect-delay') || getVarFromBody('--fade-delay') || 2000,
   }
 }
 
@@ -89,7 +90,7 @@ function startWebSocket() {
       if (!disconnectTimer && settings.fade_on_disconnect) {
         disconnectTimer = setTimeout(() => {
           document.getElementById("content").style.opacity = 0;
-        }, settings.fade_delay);
+        }, settings.fade_disconnect_delay);
       }
     });
 

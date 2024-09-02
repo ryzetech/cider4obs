@@ -93,11 +93,14 @@ body {
   /* fade the box in and out depending on whether music is playing or not */
   --fade-on-stop: 1;
 
+  /* how long playback must be paused in milliseconds until the box fades (if enabled) */
+  --fade-delay: 1000;
+
   /* the box will fade out when Cider disconnects and appears on reconnecting */
   --fade-on-disconnect: 1;
 
-  /* how long playback must be paused in milliseconds until the box fades (if enabled) */
-  --fade-delay: 1000;
+  /* the delay in milliseconds after the player has disconnected until the box fades */
+  --fade-disconnect-delay: 3000;
 }
 ```
 
