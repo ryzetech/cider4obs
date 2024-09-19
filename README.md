@@ -133,3 +133,4 @@ A list of entities I want to thank for supporting me in different ways!
 
 ## Issues, Ideas, Comments?
 Tell me in the issues tab! <3
+Don't have a GitHub account? Feel free to contact me on [Discord](discord://-/users/373135347791560706), [Telegram](https://t.me/finnleyfox), or via [Mail](mailto:cider4obs@finnley.dev)
