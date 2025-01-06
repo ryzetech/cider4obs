@@ -10,6 +10,7 @@ function getSettings() {
     fade_on_disconnect: getVarFromBody('--fade-on-disconnect') == 1,
     fade_delay: getVarFromBody('--fade-delay') || 2000,
     fade_disconnect_delay: getVarFromBody('--fade-disconnect-delay') || getVarFromBody('--fade-delay') || 2000,
+    hide_on_idle_connect: getVarFromBody('--hide-on-idle-connect') == 1
   }
 }
 
@@ -33,12 +34,20 @@ function startWebSocket() {
       document.getElementById("artist").innerText = "Start playing something!";
       document.getElementById("album").innerText = "-/-";
 
+      if (settings.hide_on_idle_connect) document.getElementById("content").style.opacity = 0;
+
       if (disconnectTimer) {
         clearTimeout(disconnectTimer);
         disconnectTimer = undefined;
         document.getElementById("content").style.opacity = 1;
       }
     });
+
+    /* itsy bitsy teeny weeny debuggy webuggy
+    CiderApp.onAny((event, ...args) => {
+      console.debug(Date.now().toString().substring(10) + ' [DEBUG] [Init] Event:', event, args);
+    });
+    */
 
     // Set up websocket artwork/information handling
     CiderApp.on("API:Playback", ({ data, type }) => {
@@ -50,7 +59,7 @@ function startWebSocket() {
             document.getElementById("content").style.opacity = 0;
           }, settings.fade_delay);
         }
-        else if (data.state == "playing" && pauseTimer) {
+        else if (data.state == "playing" && (pauseTimer || settings.hide_on_idle_connect)) {
           clearTimeout(pauseTimer);
           pauseTimer = undefined;
           document.getElementById("content").style.opacity = 1;
@@ -67,6 +76,7 @@ function startWebSocket() {
         if (document.getElementById("artist").innerText == "Start playing something!") {
           document.getElementById("artist").innerText = "Please pause and unpause the track to update track info!";
           document.getElementById("title").innerText = "Cider4OBS Connector | Connection established, but incomplete data!";
+          document.getElementById("content").style.opacity = 1;
         }
         // progress bar handler
         document.getElementById("progressBar").style.width = (
