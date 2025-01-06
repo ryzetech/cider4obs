@@ -101,6 +101,9 @@ body {
 
   /* the delay in milliseconds after the player has disconnected until the box fades */
   --fade-disconnect-delay: 3000;
+
+  /* hides the box when connection has been established but Cider is idle */
+  --hide-on-idle-connect: 1;
 }
 ```
 
