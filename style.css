@@ -1,10 +1,6 @@
-body {
-  background-color: rgba(0, 0, 0, 0); margin: 0px auto; overflow: hidden;
-}
-
 #content {
   width: 90%;
-  background-color: rgba(69, 69, 69, 0);
+  background-color: #55555555;
   border-radius: 5px;
   margin: 10px;
   padding: 10px;
@@ -25,21 +21,14 @@ span {
 
 #albumimg {
   border-radius: 5px;
-  filter: drop-shadow(0px 0px 10px #000000);
 }
 
 #title {
   font-weight: bold;
-  filter: drop-shadow(0px 0px 10px #000000);
-}
-
-#artist {
-  filter: drop-shadow(0px 0px 10px #000000);
 }
 
 #album {
   font-style: italic;
-  filter: drop-shadow(0px 0px 10px #000000);
 }
 
 #progressBg {
@@ -47,8 +36,7 @@ span {
   width: 100%;
   height: auto;
   border-radius: 5px;
-  background: linear-gradient(to right, #a64ac9, #d668ff);
-  filter: drop-shadow(0px 0px 10px #000000);
+  background-color: #55555555;
 }
 
 #progressBar {
@@ -56,12 +44,3 @@ span {
   height: 10px;
   background-color: #70e000;
 }
-
-/* CSS Variables for configuration:
-   --fade-on-stop: 1 or 0 (default: 0)
-   --fade-on-disconnect: 1 or 0 (default: 0)
-   --fade-delay: time in ms (default: 2000)
-   --fade-disconnect-delay: time in ms (default: same as fade-delay)
-   --hide-on-idle-connect: 1 or 0 (default: 0)
-   --hide-unless-playing: 1 or 0 (default: 0) - Hides everything unless music is actively playing
-*/
