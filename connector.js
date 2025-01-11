@@ -21,6 +21,11 @@ function startWebSocket() {
     // why does this work lmao
     setTimeout(() => {
       settings = getSettings();
+      
+      // Add this new block to handle initial state
+      if (settings.hide_unless_playing) {
+        document.getElementById("content").style.opacity = 0;
+      }
     }, 100);
 
     // Connect to the websocket server
