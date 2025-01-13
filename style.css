@@ -43,4 +43,5 @@ span {
   border-radius: 5px;
   height: 10px;
   background-color: #70e000;
+  transition: width 0.25s;
 }
