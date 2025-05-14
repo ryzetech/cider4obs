@@ -9,6 +9,9 @@
 ![Socket.io](https://img.shields.io/badge/Socket.io-black?style=for-the-badge&logo=socket.io&badgeColor=010101)
 ![GitHub Pages](https://img.shields.io/badge/github%20pages-121013?style=for-the-badge&logo=github&logoColor=white)
 
+
+#### <ins>This project is NOT dormant, I'm always open for suggestions and issues! :)</ins>
+
 </div>
 
 ## ❗ Requirements
