@@ -6,25 +6,38 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Cider4OBS</title>
   <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"
-  integrity="sha384-2huaZvOR9iDzHqslqwpR87isEmrfxqyWOF7hr7BY6KG0+hVKLoEXMPUJw3ynWuhO"
-  crossorigin="anonymous"></script>
+    integrity="sha384-2huaZvOR9iDzHqslqwpR87isEmrfxqyWOF7hr7BY6KG0+hVKLoEXMPUJw3ynWuhO"
+    crossorigin="anonymous"></script>
+    
+  <script src="https://unpkg.com/color-scheme@1.0.1/lib/color-scheme.min.js"></script>
+  <script src="https://unpkg.com/color.js@1.2.0/dist/color.js"></script>
   <link rel="stylesheet" href="style.css">
 </head>
 
 <body onload="startWebSocket();">
-  <div id="content">
-    <div id="mainbox">
-      <img id="albumimg" src="c4obs.png" width="84px" height="84px">
-      <div style="padding-left: 10px;">
-        <span id="title">Cider4OBS Connector | Connecting...</span><br>
-        <span id="artist">-/-</span><br>
-        <span id="album">-/-</span>
+  <div id="player-root">
+    <div id="content">
+      <div id="bg-layer"></div>
+
+      <div id="mainbox">
+        <img id="albumimg" src="c4obs.png" alt="cover">
+        <div class="text-block">
+          <span id="title">Cider4OBS Connector | Connecting...</span><br>
+          <span id="artist">-/-</span><br>
+          <span id="album">-/-</span>
+        </div>
+      </div>
+
+      <div id="progressRow">
+        <span id="timeCurrent">0:00</span>
+        <div id="progressBg">
+          <div id="progressBar"></div>
+        </div>
+        <span id="timeRemaining">-0:00</span>
       </div>
     </div>
-    <div id="progressBg">
-      <div id="progressBar"></div>
-    </div>
   </div>
+
   <script src="connector.js"></script>
 </body>
 

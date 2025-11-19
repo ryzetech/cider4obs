@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <title>Cider Queue (Top 5)</title>
+
+  <style>
+    html,
+    body {
+      margin: 0;
+      padding: 0;
+      background: transparent;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+        Roboto, Helvetica, Arial, sans-serif;
+      color: #ffffff;
+    }
+
+    #queue-root {
+      width: 420px;
+      max-width: 100%;
+    }
+
+    #queue-container {
+      margin: 4px;
+      padding: 0;
+    }
+
+    #queue-title {
+      font-size: 12px;
+      font-weight: 600;
+      opacity: 0.9;
+      margin-bottom: 2px;
+    }
+
+    #queue-list {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .queue-item {
+      display: grid;
+      grid-template-columns: 16px 40px minmax(0, 1fr);
+      column-gap: 4px;
+      align-items: center;
+      padding: 2px 0;
+    }
+
+    .queue-index {
+      font-size: 10px;
+      opacity: 0.7;
+      text-align: right;
+    }
+
+    .queue-cover {
+      width: 32px;
+      height: 32px;
+      border-radius: 6px;
+      object-fit: cover;
+      display: block;
+    }
+
+    .queue-text {
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      line-height: 1.0;
+    }
+
+    .q-title {
+      font-size: 11px;
+      font-weight: 500;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .q-artist {
+      font-size: 10px;
+      opacity: 0.85;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .q-album {
+      font-size: 9px;
+      opacity: 0.65;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    #queue-empty {
+      font-size: 10px;
+      opacity: 0.7;
+      font-style: italic;
+      margin-top: 2px;
+    }
+  </style>
+</head>
+
+<body>
+  <div id="queue-root">
+    <div id="queue-container">
+      <div id="queue-title">À venir</div>
+      <ul id="queue-list"></ul>
+      <div id="queue-empty"></div>
+    </div>
+  </div>
+
+  <script>
+    const MAX_ITEMS = 5;
+
+    const API_BASE = "http://localhost:10767/api/v1/playback";
+    const API_TOKEN = ""; // ex: "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+
+    let lastQueueSignature = null;
+
+    function mapTrack(raw) {
+      if (!raw) {
+        return { id: "", title: "-/-", artist: "-/-", album: "", cover: "" };
+      }
+
+      const attr = raw.attributes || {};
+      const id =
+        raw.id ||
+        (attr.playParams && attr.playParams.id) ||
+        attr.url ||
+        "";
+
+      let cover = "";
+      if (attr.artwork && attr.artwork.url) {
+        cover = attr.artwork.url;
+        if (cover.includes("{w}") && cover.includes("{h}")) {
+          cover = cover.replace("{w}", 64).replace("{h}", 64);
+        }
+      }
+
+      return {
+        id,
+        title: attr.name || raw.name || "-/-",
+        artist: attr.artistName || raw.artistName || "-/-",
+        album: attr.albumName || raw.albumName || "",
+        cover
+      };
+    }
+
+    function createEmptyQueueItemElement() {
+      const li = document.createElement("li");
+      li.className = "queue-item";
+
+      const idx = document.createElement("div");
+      idx.className = "queue-index";
+
+      const img = document.createElement("img");
+      img.className = "queue-cover";
+
+      const text = document.createElement("div");
+      text.className = "queue-text";
+
+      const titleEl = document.createElement("span");
+      titleEl.className = "q-title";
+
+      const artistEl = document.createElement("span");
+      artistEl.className = "q-artist";
+
+      const albumEl = document.createElement("span");
+      albumEl.className = "q-album";
+
+      text.appendChild(titleEl);
+      text.appendChild(artistEl);
+      text.appendChild(albumEl);
+
+      li.appendChild(idx);
+      li.appendChild(img);
+      li.appendChild(text);
+
+      return li;
+    }
+
+    function ensureListSkeleton() {
+      const list = document.getElementById("queue-list");
+      while (list.children.length < MAX_ITEMS) {
+        list.appendChild(createEmptyQueueItemElement());
+      }
+    }
+
+    function renderQueue(mappedTracks) {
+      ensureListSkeleton();
+
+      const list = document.getElementById("queue-list");
+      const empty = document.getElementById("queue-empty");
+
+      if (!mappedTracks || mappedTracks.length === 0) {
+        for (let i = 0; i < list.children.length; i++) {
+          list.children[i].style.display = "none";
+        }
+        empty.style.display = "block";
+        return;
+      }
+
+      const count = Math.min(mappedTracks.length, MAX_ITEMS);
+
+      for (let i = 0; i < list.children.length; i++) {
+        const li = list.children[i];
+
+        if (i < count) {
+          const track = mappedTracks[i];
+          li.style.display = "grid";
+
+          const idxEl = li.querySelector(".queue-index");
+          const imgEl = li.querySelector(".queue-cover");
+          const titleEl = li.querySelector(".q-title");
+          const artistEl = li.querySelector(".q-artist");
+          const albumEl = li.querySelector(".q-album");
+
+          idxEl.textContent = i + 1;
+          titleEl.textContent = track.title;
+          artistEl.textContent = track.artist;
+
+          if (track.album) {
+            albumEl.textContent = track.album;
+            albumEl.style.display = "";
+          } else {
+            albumEl.textContent = "";
+            albumEl.style.display = "none";
+          }
+
+          if (track.cover) {
+            if (imgEl.src !== track.cover) {
+              imgEl.src = track.cover;
+            }
+            imgEl.style.visibility = "visible";
+          } else {
+            imgEl.removeAttribute("src");
+            imgEl.style.visibility = "hidden";
+          }
+        } else {
+          li.style.display = "none";
+        }
+      }
+
+      empty.style.display = "none";
+    }
+
+    function sliceFromCurrent(data) {
+      if (!Array.isArray(data) || data.length === 0) return [];
+
+      const idxCurrent = data.findIndex(
+        (item) => item && item._state && typeof item._state.current === "number"
+      );
+
+      let start = 0;
+      if (idxCurrent !== -1) {
+        start = idxCurrent;
+      }
+
+      return data.slice(start, start + MAX_ITEMS);
+    }
+
+    function updateQueueList(rawData) {
+      const empty = document.getElementById("queue-empty");
+
+      if (!Array.isArray(rawData) || rawData.length === 0) {
+        renderQueue([]);
+        lastQueueSignature = null;
+        return;
+      }
+
+      const slice = sliceFromCurrent(rawData);
+
+      if (slice.length === 0) {
+        renderQueue([]);
+        lastQueueSignature = null;
+        return;
+      }
+
+      const sig = slice
+        .map((t) => {
+          const attr = t.attributes || {};
+          return (
+            t.id ||
+            (attr.playParams && attr.playParams.id) ||
+            attr.name ||
+            ""
+          );
+        })
+        .join("|");
+
+      if (sig === lastQueueSignature) {
+        return;
+      }
+      lastQueueSignature = sig;
+
+      const mapped = slice.map(mapTrack);
+      renderQueue(mapped);
+    }
+
+    async function fetchQueue() {
+      try {
+        const headers = {};
+        if (API_TOKEN) headers["apitoken"] = API_TOKEN;
+
+        const res = await fetch(`${API_BASE}/queue`, {
+          method: "GET",
+          headers,
+          cache: "no-store",
+        });
+
+        if (!res.ok) {
+          console.debug("[Queue] HTTP error", res.status);
+          updateQueueList([]);
+          return;
+        }
+
+        const data = await res.json();
+        updateQueueList(data);
+      } catch (err) {
+        console.debug("[Queue] fetchQueue error", err);
+        updateQueueList([]);
+      }
+    }
+
+    function startQueuePolling() {
+      fetchQueue();
+      setInterval(fetchQueue, 3000);
+    }
+
+    startQueuePolling();
+  </script>
+</body>
+
+</html>
