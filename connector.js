@@ -197,11 +197,11 @@ function checkQueueReveal(currentTime, duration) {
   if (!settings.show_next_in_queue) return;
   
   const timeRemaining = duration - currentTime;
-  const shouldReveal = timeRemaining <= settings.next_in_queue_reveal_time;
+  const shouldReveal = timeRemaining <= settings.next_in_queue_reveal_time && timeRemaining > 0.5;
   
   if (shouldReveal && elements.nextTitle.innerText !== '-') {
     elements.nextInQueue.classList.add('visible');
-  } else if (!shouldReveal) {
+  } else {
     elements.nextInQueue.classList.remove('visible');
   }
 }
