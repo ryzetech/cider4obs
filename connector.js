@@ -53,6 +53,114 @@ function getCSSVariable(name) {
 }
 
 /**
+ * Show visual notification overlay
+ */
+function showNotification(message, duration = 5000) {
+  // Create notification element
+  const notification = document.createElement('div');
+  notification.id = 'urlParamNotification';
+  notification.style.cssText = `
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: linear-gradient(135deg, #f52a5a 0%, #900247 100%);
+    color: white;
+    padding: 15px 25px;
+    border-radius: 8px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-size: 14px;
+    z-index: 10000;
+    max-width: 90%;
+    text-align: center;
+    animation: slideDown 0.3s ease-out;
+  `;
+  notification.innerHTML = `<strong>⚙️ Configuration Override</strong><br>${message}`;
+  
+  // Add animation keyframes
+  if (!document.getElementById('notificationStyles')) {
+    const style = document.createElement('style');
+    style.id = 'notificationStyles';
+    style.textContent = `
+      @keyframes slideDown {
+        from { transform: translateX(-50%) translateY(-100%); opacity: 0; }
+        to { transform: translateX(-50%) translateY(0); opacity: 1; }
+      }
+      @keyframes fadeOut {
+        to { opacity: 0; transform: translateX(-50%) translateY(-20px); }
+      }
+    `;
+    document.head.appendChild(style);
+  }
+  
+  document.body.appendChild(notification);
+  
+  // Auto-remove after duration
+  setTimeout(() => {
+    notification.style.animation = 'fadeOut 0.3s ease-out forwards';
+    setTimeout(() => notification.remove(), 300);
+  }, duration);
+}
+
+/**
+ * Parse URL parameters and apply them as CSS variables
+ */
+function applyURLParameters() {
+  const urlParams = new URLSearchParams(window.location.search);
+  const appliedParams = [];
+  const overriddenParams = [];
+  
+  // Handle custom CSS parameter
+  if (urlParams.has('css')) {
+    const customCSS = urlParams.get('css');
+    const styleElement = document.createElement('style');
+    styleElement.id = 'customURLStyles';
+    styleElement.textContent = customCSS;
+    document.head.appendChild(styleElement);
+    appliedParams.push('Custom CSS styling applied');
+  }
+  
+  const paramMap = {
+    'fade-on-stop': '--fade-on-stop',
+    'fade-on-disconnect': '--fade-on-disconnect',
+    'fade-delay': '--fade-delay',
+    'fade-disconnect-delay': '--fade-disconnect-delay',
+    'hide-on-idle-connect': '--hide-on-idle-connect',
+    'hide-unless-playing': '--hide-unless-playing',
+    'show-time-labels': '--show-time-labels',
+    'show-next-in-queue': '--show-next-in-queue',
+    'next-in-queue-reveal-time': '--next-in-queue-reveal-time',
+    'next-in-queue-slide-direction': '--next-in-queue-slide-direction'
+  };
+  
+  for (const [param, cssVar] of Object.entries(paramMap)) {
+    if (urlParams.has(param)) {
+      const urlValue = urlParams.get(param);
+      const cssValue = getCSSVariable(cssVar).trim();
+      
+      // Check if we're overriding an existing CSS value
+      if (cssValue && cssValue !== urlValue) {
+        overriddenParams.push(`${param}: ${cssValue} → ${urlValue}`);
+      } else {
+        appliedParams.push(`${param}=${urlValue}`);
+      }
+      
+      document.body.style.setProperty(cssVar, urlValue);
+    }
+  }
+  
+  // Show notification if parameters were applied
+  if (appliedParams.length > 0 || overriddenParams.length > 0) {
+    let message = '';
+    if (overriddenParams.length > 0) {
+      message = `URL parameters are overriding CSS settings:<br><small>${overriddenParams.join('<br>')}</small>`;
+      showNotification(message, 10000);
+    }
+  }
+}
+
+/**
  * Parse settings from CSS variables
  */
 function getSettings() {
@@ -320,8 +428,11 @@ function handlePlaybackEvent({ data, type }) {
  */
 function startWebSocket() {
   try {
-    // Pause to allow OBS to inject CSS
+    // Pause to allow OBS to inject CSS, then apply URL parameters
     setTimeout(() => {
+      // Apply URL parameters after CSS has loaded to detect overrides
+      applyURLParameters();
+      
       settings = getSettings();
       cacheElements();
       
