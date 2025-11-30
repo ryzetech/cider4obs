@@ -15,6 +15,7 @@ const ELEMENTS = {
   currentTime: 'currentTime',
   duration: 'duration',
   nextInQueue: 'nextInQueue',
+  nextQueueBox: 'nextQueueBox',
   nextTitle: 'nextTitle',
   nextArtist: 'nextArtist',
   nextAlbumImg: 'nextAlbumImg'
@@ -34,6 +35,14 @@ function cacheElements() {
   Object.keys(ELEMENTS).forEach(key => {
     elements[key] = document.getElementById(ELEMENTS[key]);
   });
+  
+  // Set slide direction attribute on nextQueueBox element
+  if (elements.nextQueueBox && settings) {
+    const direction = settings.next_in_queue_slide_direction;
+    if (['top', 'bottom', 'left', 'right'].includes(direction)) {
+      elements.nextQueueBox.setAttribute('data-slide', direction);
+    }
+  }
 }
 
 /**
@@ -57,7 +66,8 @@ function getSettings() {
     hide_unless_playing: getCSSVariable('--hide-unless-playing') === '1',
     show_time_labels: getCSSVariable('--show-time-labels') === '1',
     show_next_in_queue: getCSSVariable('--show-next-in-queue') === '1',
-    next_in_queue_reveal_time: parseInt(getCSSVariable('--next-in-queue-reveal-time')) || DEFAULT_QUEUE_REVEAL_TIME
+    next_in_queue_reveal_time: parseInt(getCSSVariable('--next-in-queue-reveal-time')) || DEFAULT_QUEUE_REVEAL_TIME,
+    next_in_queue_slide_direction: getCSSVariable('--next-in-queue-slide-direction').trim() || 'top'
   };
 }
 
@@ -312,8 +322,8 @@ function startWebSocket() {
   try {
     // Pause to allow OBS to inject CSS
     setTimeout(() => {
-      cacheElements();
       settings = getSettings();
+      cacheElements();
       
       // Set initial state
       if (settings.hide_unless_playing) {

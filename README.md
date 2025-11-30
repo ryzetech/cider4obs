@@ -151,6 +151,13 @@ body {
   }
   ```
 
+- `--next-in-queue-slide-direction`: Direction from which the next-in-queue box slides in. Options: `top`, `bottom`, `left`, `right`, or `none` to disable slide animation. Default: `top`
+  ```css
+  #overlay {
+    --next-in-queue-slide-direction: left;
+  }
+  ```
+
 ## 💜 Trusted by streamers
 Thank you for supporting this project by using and spreading it! You are my heroes!
 
