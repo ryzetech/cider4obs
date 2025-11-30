@@ -5,6 +5,37 @@
   margin: 10px;
   padding: 10px;
   transition: opacity 1s;
+  position: relative;
+  margin: 6px;
+  padding: 8px 12px;
+  border-radius: 18px;
+  overflow: hidden;
+  background: radial-gradient(circle at top left,
+              #3a3a3a 0%, #252525 40%, #151515 100%);
+  box-shadow: 0 10px 26px rgba(0, 0, 0, 0.65);
+  display: flex;
+  flex-direction: column;
+  gap: 2px; /* texte serré */
+  transition: opacity 0.6s ease;
+}
+
+#bg-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: 130% 130%;
+  filter: blur(22px) brightness(0.8) saturate(1.2);
+  transform: scale(1.1);
+  opacity: 1;
+  pointer-events: none;
+}
+
+#mainbox,
+#progressRow {
+  position: relative;
+  z-index: 1;
 }
 
 body { 
@@ -28,6 +59,10 @@ span {
 #albumimg {
   border-radius: 5px;
   filter: drop-shadow(0px 0px 10px #000000);
+  white-space: nowrap;
+  overflow: hidden;
+  line-height: 1.0;
+  margin: 0;
 }
 
 #title {
@@ -37,11 +72,34 @@ span {
 
 #artist {
   filter: drop-shadow(0px 0px 10px #000000);
+  font-weight: 600;
+  font-size: 13px;
+}
+
+#artist {
+  font-size: 11px;
+  opacity: 0.95;
 }
 
 #album {
   font-style: italic;
   filter: drop-shadow(0px 0px 10px #000000);
+  font-size: 10px;
+  opacity: 0.8;
+}
+
+#progressRow {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 4px;
+  margin-top: 1px;
+}
+
+#timeCurrent,
+#timeRemaining {
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.85);
 }
 
 #progressBg {
@@ -51,11 +109,19 @@ span {
   border-radius: 5px;
   background-color: #55555555;
   filter: drop-shadow(0px 0px 10px #000000);
+  height: 4px;
+  border-radius: 999px;
+  background-color: rgba(255, 255, 255, 0.22);
+  overflow: hidden;
 }
 
 #progressBar {
   border-radius: 5px;
   height: 10px;
+<<<<<<< HEAD
   background-color: #70e000;
   transition: linear width 0.25s;
+=======
+  background: linear-gradient(to right, #a64ac9, #d668ff);
+>>>>>>> df8b6c5203d36971a63dbd160e3d234044849acf
 }
