@@ -10,7 +10,9 @@ const ELEMENTS = {
   artist: 'artist',
   album: 'album',
   albumImg: 'albumimg',
-  progressBar: 'progressBar'
+  progressBar: 'progressBar',
+  currentTime: 'currentTime',
+  duration: 'duration'
 };
 
 // State
@@ -46,8 +48,25 @@ function getSettings() {
     fade_disconnect_delay: parseInt(getCSSVariable('--fade-disconnect-delay')) || 
                           parseInt(getCSSVariable('--fade-delay')) || DEFAULT_FADE_DELAY,
     hide_on_idle_connect: getCSSVariable('--hide-on-idle-connect') === '1',
-    hide_unless_playing: getCSSVariable('--hide-unless-playing') === '1'
+    hide_unless_playing: getCSSVariable('--hide-unless-playing') === '1',
+    show_time_labels: getCSSVariable('--show-time-labels') === '1'
   };
+}
+
+/**
+ * Format seconds to M:SS or H:MM:SS format
+ */
+function formatTime(seconds) {
+  if (!seconds || isNaN(seconds)) return '0:00';
+  
+  const hours = Math.floor(seconds / 3600);
+  const minutes = Math.floor((seconds % 3600) / 60);
+  const secs = Math.floor(seconds % 60);
+  
+  if (hours > 0) {
+    return `${hours}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  }
+  return `${minutes}:${secs.toString().padStart(2, '0')}`;
 }
 
 /**
@@ -160,6 +179,11 @@ function handlePlaybackEvent({ data, type }) {
       }
       elements.progressBar.style.width = 
         `${(data.currentPlaybackTime / data.currentPlaybackDuration) * 100}%`;
+      
+      if (settings.show_time_labels) {
+        elements.currentTime.innerText = formatTime(data.currentPlaybackTime);
+        elements.duration.innerText = formatTime(data.currentPlaybackDuration);
+      }
       break;
       
     default:
