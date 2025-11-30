@@ -10,7 +10,8 @@ function getSettings() {
     fade_on_disconnect: getVarFromBody('--fade-on-disconnect') == 1,
     fade_delay: getVarFromBody('--fade-delay') || 2000,
     fade_disconnect_delay: getVarFromBody('--fade-disconnect-delay') || getVarFromBody('--fade-delay') || 2000,
-    hide_on_idle_connect: getVarFromBody('--hide-on-idle-connect') == 1
+    hide_on_idle_connect: getVarFromBody('--hide-on-idle-connect') == 1,
+    hide_unless_playing: getVarFromBody('--hide-unless-playing') == 1
   }
 }
 
@@ -20,6 +21,11 @@ function startWebSocket() {
     // why does this work lmao
     setTimeout(() => {
       settings = getSettings();
+      
+      // Add this new block to handle initial state
+      if (settings.hide_unless_playing) {
+        document.getElementById("content").style.opacity = 0;
+      }
     }, 100);
 
     // Connect to the websocket server
@@ -34,12 +40,16 @@ function startWebSocket() {
       document.getElementById("artist").innerText = "Start playing something!";
       document.getElementById("album").innerText = "-/-";
 
-      if (settings.hide_on_idle_connect) document.getElementById("content").style.opacity = 0;
+      if (settings.hide_on_idle_connect || settings.hide_unless_playing) {
+        document.getElementById("content").style.opacity = 0;
+      }
 
       if (disconnectTimer) {
         clearTimeout(disconnectTimer);
         disconnectTimer = undefined;
-        document.getElementById("content").style.opacity = 1;
+        if (!settings.hide_unless_playing) {
+          document.getElementById("content").style.opacity = 1;
+        }
       }
     });
 
@@ -54,16 +64,19 @@ function startWebSocket() {
       // data update on play/pause
       if (type == "playbackStatus.playbackStateDidChange") {
         // fade handler
-        if (data.state == "paused" && !pauseTimer && settings.fade_on_stop) {
-          pauseTimer = setTimeout(() => {
-            document.getElementById("content").style.opacity = 0;
-          }, settings.fade_delay);
-        }
-        else if (data.state == "playing" && (pauseTimer || settings.hide_on_idle_connect)) {
-          clearTimeout(pauseTimer);
-          pauseTimer = undefined;
-          document.getElementById("content").style.opacity = 1;
-        }
+        if (data.state == "paused" && !pauseTimer && 
+          (settings.fade_on_stop || settings.hide_unless_playing)) {
+            pauseTimer = setTimeout(() => {
+              document.getElementById("content").style.opacity = 0;
+            }, settings.fade_delay);
+          }
+          else if (data.state == "playing") {
+            if (pauseTimer) {
+              clearTimeout(pauseTimer);
+              pauseTimer = undefined;
+            }
+            document.getElementById("content").style.opacity = 1;
+          }
 
         updateComponents(data.attributes);
       }
@@ -73,12 +86,14 @@ function startWebSocket() {
       }
       // playback updates
       else if (type == "playbackStatus.playbackTimeDidChange") {
-        if (document.getElementById("artist").innerText == "Start playing something!") {
-          document.getElementById("artist").innerText = "Please pause and unpause the track to update track info!";
-          document.getElementById("title").innerText = "Cider4OBS Connector | Connection established, but incomplete data!";
-          document.getElementById("content").style.opacity = 1;
+        if (!settings.hide_unless_playing) {  // Only show these messages if hide_unless_playing is disabled
+          if (document.getElementById("artist").innerText == "Start playing something!") {
+            document.getElementById("artist").innerText = "Please pause and unpause the track to update track info!";
+            document.getElementById("title").innerText = "Cider4OBS Connector | Connection established, but incomplete data!";
+            document.getElementById("content").style.opacity = 1;
+          }
         }
-        // progress bar handler
+        // progress bar handler - keep this part
         document.getElementById("progressBar").style.width = (
           ((data.currentPlaybackTime / data.currentPlaybackDuration) * 100) + "%"
         );
@@ -96,8 +111,13 @@ function startWebSocket() {
       document.getElementById("albumimg").src = "c4obs.png";
       console.debug('[DEBUG] [Init] Socket.io connection closed!');
       console.debug("[DEBUG] [Init] Retrying automatically...");
-
-      if (!disconnectTimer && settings.fade_on_disconnect) {
+    
+      // Hide immediately if hide_unless_playing is enabled
+      if (settings.hide_unless_playing) {
+        document.getElementById("content").style.opacity = 0;
+      }
+      // Otherwise use the normal fade behavior
+      else if (!disconnectTimer && settings.fade_on_disconnect) {
         disconnectTimer = setTimeout(() => {
           document.getElementById("content").style.opacity = 0;
         }, settings.fade_disconnect_delay);
