@@ -16,7 +16,7 @@
 
 ## ❗ Requirements
 * [Open Broadcaster Software](https://obsproject.com/)
-* [Cider 2.5+](https://cider.sh)
+* [Cider Version 3+](https://cider.sh)
 * An Apple Music subscription (duh)
 
 ## 🛠 Setup
@@ -127,6 +127,29 @@ body {
   --hide-unless-playing: 1;
 }
 ```
+
+### [NEW] Additional Display Options
+
+- `--show-time-labels`: Set to `inline-block` to show current playback time and song duration on either end of the progress bar. Default: `none` (hidden)
+  ```css
+  #overlay {
+    --show-time-labels: inline-block;
+  }
+  ```
+
+- `--show-next-in-queue`: Set to `block` to show a box with the next song in queue that fades/slides in before the current song ends. Default: `none` (hidden)
+  ```css
+  #overlay {
+    --show-next-in-queue: block;
+  }
+  ```
+
+- `--next-in-queue-reveal-time`: Number of seconds before the current song ends to reveal the next-in-queue box. Default: `10`
+  ```css
+  #overlay {
+    --next-in-queue-reveal-time: 15;
+  }
+  ```
 
 ## 💜 Trusted by streamers
 Thank you for supporting this project by using and spreading it! You are my heroes!

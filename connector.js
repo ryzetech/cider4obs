@@ -2,6 +2,7 @@
 const CIDER_SOCKET_URL = "http://localhost:10767/";
 const SETTINGS_LOAD_DELAY = 100;
 const DEFAULT_FADE_DELAY = 2000;
+const DEFAULT_QUEUE_REVEAL_TIME = 10;
 
 // Element IDs
 const ELEMENTS = {
@@ -12,7 +13,11 @@ const ELEMENTS = {
   albumImg: 'albumimg',
   progressBar: 'progressBar',
   currentTime: 'currentTime',
-  duration: 'duration'
+  duration: 'duration',
+  nextInQueue: 'nextInQueue',
+  nextTitle: 'nextTitle',
+  nextArtist: 'nextArtist',
+  nextAlbumImg: 'nextAlbumImg'
 };
 
 // State
@@ -20,6 +25,7 @@ let pauseTimer;
 let disconnectTimer;
 let settings;
 let elements = {};
+let currentTrackName = null;
 
 /**
  * Cache DOM elements for better performance
@@ -49,7 +55,9 @@ function getSettings() {
                           parseInt(getCSSVariable('--fade-delay')) || DEFAULT_FADE_DELAY,
     hide_on_idle_connect: getCSSVariable('--hide-on-idle-connect') === '1',
     hide_unless_playing: getCSSVariable('--hide-unless-playing') === '1',
-    show_time_labels: getCSSVariable('--show-time-labels') === '1'
+    show_time_labels: getCSSVariable('--show-time-labels') === '1',
+    show_next_in_queue: getCSSVariable('--show-next-in-queue') === '1',
+    next_in_queue_reveal_time: parseInt(getCSSVariable('--next-in-queue-reveal-time')) || DEFAULT_QUEUE_REVEAL_TIME
   };
 }
 
@@ -100,6 +108,9 @@ function updateComponents(data) {
   elements.artist.innerText = data.artistName;
   elements.album.innerText = data.albumName;
   
+  // Store current track name for queue matching
+  currentTrackName = data.name;
+  
   const artworkUrl = data.artwork.url
     .replace("{w}", data.artwork.width)
     .replace("{h}", data.artwork.height);
@@ -126,6 +137,76 @@ async function fetchNowPlaying() {
 }
 
 /**
+ * Fetch queue and update next in queue display
+ */
+async function fetchQueue() {
+  if (!settings.show_next_in_queue) return;
+  
+  try {
+    const response = await fetch(`${CIDER_SOCKET_URL}api/v1/playback/queue`);
+    const queue = await response.json();
+    
+    if (Array.isArray(queue) && queue.length > 0 && currentTrackName) {
+      // Find the currently playing track by matching the track name
+      const currentIndex = queue.findIndex(track => 
+        track.attributes && track.attributes.name === currentTrackName
+      );
+      
+      // Get the next track after the currently playing one
+      if (currentIndex >= 0 && currentIndex < queue.length - 1) {
+        const nextTrack = queue[currentIndex + 1];
+        if (nextTrack.attributes) {
+          updateNextInQueue(nextTrack.attributes);
+          // Don't show immediately, wait for time-based reveal
+          return;
+        }
+      }
+    }
+    
+    hideNextInQueue();
+  } catch (error) {
+    console.debug('[DEBUG] [API] Failed to fetch queue:', error);
+    hideNextInQueue();
+  }
+}
+
+/**
+ * Update next in queue display
+ */
+function updateNextInQueue(data) {
+  elements.nextTitle.innerText = data.name;
+  elements.nextArtist.innerText = data.artistName;
+  
+  const artworkUrl = data.artwork.url
+    .replace("{w}", data.artwork.width)
+    .replace("{h}", data.artwork.height);
+  elements.nextAlbumImg.src = artworkUrl;
+}
+
+/**
+ * Hide next in queue display
+ */
+function hideNextInQueue() {
+  elements.nextInQueue.classList.remove('visible');
+}
+
+/**
+ * Check if next in queue should be revealed based on time remaining
+ */
+function checkQueueReveal(currentTime, duration) {
+  if (!settings.show_next_in_queue) return;
+  
+  const timeRemaining = duration - currentTime;
+  const shouldReveal = timeRemaining <= settings.next_in_queue_reveal_time;
+  
+  if (shouldReveal && elements.nextTitle.innerText !== '-') {
+    elements.nextInQueue.classList.add('visible');
+  } else if (!shouldReveal) {
+    elements.nextInQueue.classList.remove('visible');
+  }
+}
+
+/**
  * Handle playback state changes
  */
 function handlePlaybackStateChange(state) {
@@ -145,6 +226,11 @@ async function handleConnect() {
   
   // Try to fetch current track information
   const hasTrack = await fetchNowPlaying();
+  
+  // Fetch queue if enabled
+  if (settings.show_next_in_queue) {
+    await fetchQueue();
+  }
   
   if (!hasTrack) {
     elements.title.innerText = "Cider4OBS Connector | Connection established!";
@@ -196,6 +282,9 @@ function handlePlaybackEvent({ data, type }) {
       
     case "playbackStatus.nowPlayingItemDidChange":
       updateComponents(data);
+      if (settings.show_next_in_queue) {
+        fetchQueue();
+      }
       break;
       
     case "playbackStatus.playbackTimeDidChange":
@@ -206,6 +295,9 @@ function handlePlaybackEvent({ data, type }) {
         elements.currentTime.innerText = formatTime(data.currentPlaybackTime);
         elements.duration.innerText = formatTime(data.currentPlaybackDuration);
       }
+      
+      // Check if next in queue should be revealed
+      checkQueueReveal(data.currentPlaybackTime, data.currentPlaybackDuration);
       break;
       
     default:
