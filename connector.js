@@ -107,6 +107,25 @@ function updateComponents(data) {
 }
 
 /**
+ * Fetch current now playing information from API
+ */
+async function fetchNowPlaying() {
+  try {
+    const response = await fetch(`${CIDER_SOCKET_URL}api/v1/playback/now-playing`);
+    const data = await response.json();
+    
+    if (data.status === 'ok' && data.info) {
+      updateComponents(data.info);
+      return true;
+    }
+    return false;
+  } catch (error) {
+    console.debug('[DEBUG] [API] Failed to fetch now playing:', error);
+    return false;
+  }
+}
+
+/**
  * Handle playback state changes
  */
 function handlePlaybackStateChange(state) {
@@ -121,14 +140,22 @@ function handlePlaybackStateChange(state) {
 /**
  * Handle connection state
  */
-function handleConnect() {
+async function handleConnect() {
   console.debug('[DEBUG] [Init] Socket.io connection established!');
-  elements.title.innerText = "Cider4OBS Connector | Connection established!";
-  elements.artist.innerText = "Start playing something!";
-  elements.album.innerText = "-/-";
+  
+  // Try to fetch current track information
+  const hasTrack = await fetchNowPlaying();
+  
+  if (!hasTrack) {
+    elements.title.innerText = "Cider4OBS Connector | Connection established!";
+    elements.artist.innerText = "Start playing something!";
+    elements.album.innerText = "-/-";
+  }
 
   if (settings.hide_on_idle_connect || settings.hide_unless_playing) {
     elements.content.style.opacity = 0;
+  } else {
+    elements.content.style.opacity = 1;
   }
 
   if (disconnectTimer) {
@@ -172,11 +199,6 @@ function handlePlaybackEvent({ data, type }) {
       break;
       
     case "playbackStatus.playbackTimeDidChange":
-      if (!settings.hide_unless_playing && elements.artist.innerText === "Start playing something!") {
-        elements.artist.innerText = "Please pause and unpause the track to update track info!";
-        elements.title.innerText = "Cider4OBS Connector | Connection established, but incomplete data!";
-        elements.content.style.opacity = 1;
-      }
       elements.progressBar.style.width = 
         `${(data.currentPlaybackTime / data.currentPlaybackDuration) * 100}%`;
       
