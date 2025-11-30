@@ -20,14 +20,14 @@
 * An Apple Music subscription (duh)
 
 ## 🛠 Setup
-1. Setup Cider if you haven't done so already and open the settings. Go to "Connectivity" and scroll down all the way. Enable the Switch "WebSockets API". This isn't technically needed anymore, but it's good to have it enabled nevertheless.
-2. Create a new Browser Source in OBS and set the URL to [`https://ryzetech.github.io/cider4obs/`](https://ryzetech.github.io/cider4obs/).
-3. The source will spawn with a width of `800` by default. Resize it if necessary (my personal sweet spot is `400`) and change the height to `170` or something like that.
-4. The browser in OBS will now attempt to connect to Cider every five seconds and reestablish the connection if necessary!
-5. If you want to customize how the app is looking, read below. Add the options into the Custom CSS box of OBS!
+1. Setup Cider if you haven't done so already and open the settings. Go to **Connectivity** and scroll down all the way. Enable the **WebSockets API** switch. This isn't technically needed anymore, but it's good to have it enabled nevertheless.
+2. Create a new **Browser Source** in OBS and set the URL to [`https://ryzetech.github.io/cider4obs/`](https://ryzetech.github.io/cider4obs/).
+3. The source will spawn with a default width of `800`. Resize it if necessary (recommended: `400` width) and set the height to approximately `170`.
+4. The browser will automatically attempt to connect to Cider and reestablish the connection if needed!
+5. To customize appearance and behavior, see the customization section below. Add your custom CSS to the **Custom CSS** box in the OBS browser source settings!
 
 ## 🎨 Customization & Settings
-Unhappy with the way the app looks and behaves by default? You can change the settings with the "Custom CSS" box in the OBS browser source. I have compiled some **examples** below to just copy and change to your liking.
+Not happy with the default appearance and behavior? You can customize everything using the **Custom CSS** box in the OBS browser source settings. Here are some examples to copy and modify:
 
 To pick colors, I recommend https://rgbacolorpicker.com/.
 
@@ -43,7 +43,7 @@ To pick colors, I recommend https://rgbacolorpicker.com/.
 ```
 
 ### Text Customization
-Customizable elements are `span, #title, #artist, #album`
+Customizable elements are `span, .track-title, .track-artist, .track-album`
 ```css
 /* to change the text color, do */
 span {
@@ -52,18 +52,23 @@ span {
 }
 
 /* to make the title look neutral instead of bold, do: */
-#title {
+.track-title {
   font-weight: normal;
 }
 
 /* similar with the album name (pay attention to the attribute!) */
-#album {
+.track-album {
   font-style: normal;
 }
 
 /* you can even hide elements: */
-#album {
+.track-album {
   display: none;
+}
+
+/* or target by ID if you prefer: */
+#title, #artist, #album {
+  /* your styles here */
 }
 ```
 
@@ -87,26 +92,39 @@ Customizable elements are `#progressBg, #progressBar`.
 }
 ```
 
-### Settings
-Some settings adjusting the behavior of certain elements.
+## ⚙️ Configuration Options
+
+You can control the behavior of the Cider4OBS overlay using CSS custom properties. Add these to the `body` selector in the OBS browser source's Custom CSS box:
+
 ```css
 body {
-  /* general key unless stated otherwise: 1=on, 0=off */
-  
-  /* fade the box in and out depending on whether music is playing or not */
+  /* Fade the box in/out when music is paused or stopped */
+  --fade-on-stop: 1; /* 1 = enabled, 0 = disabled */
+
+  /* Fade the box in/out when Cider disconnects */
+  --fade-on-disconnect: 1; /* 1 = enabled, 0 = disabled */
+
+  /* Delay (ms) before fading out after pausing/stopping */
+  --fade-delay: 2000; /* Default: 2000ms */
+
+  /* Delay (ms) before fading out after disconnecting */
+  --fade-disconnect-delay: 2000; /* Default: 2000ms, falls back to --fade-delay if not set */
+
+  /* Hide the box when connected but Cider is idle */
+  --hide-on-idle-connect: 1; /* 1 = enabled, 0 = disabled */
+
+  /* Hide the box unless music is playing */
+  --hide-unless-playing: 1; /* 1 = enabled, 0 = disabled */
+}
+```
+
+**Tip:** You can combine these options to customize exactly when the overlay appears or fades out. For example, to only show the overlay when music is playing and fade out quickly when paused:
+
+```css
+body {
   --fade-on-stop: 1;
-
-  /* how long playback must be paused in milliseconds until the box fades (if enabled) */
   --fade-delay: 1000;
-
-  /* the box will fade out when Cider disconnects and appears on reconnecting */
-  --fade-on-disconnect: 1;
-
-  /* the delay in milliseconds after the player has disconnected until the box fades */
-  --fade-disconnect-delay: 3000;
-
-  /* hides the box when connection has been established but Cider is idle */
-  --hide-on-idle-connect: 1;
+  --hide-unless-playing: 1;
 }
 ```
 

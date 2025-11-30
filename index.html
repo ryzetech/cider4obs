@@ -6,25 +6,31 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Cider4OBS</title>
   <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"
-  integrity="sha384-2huaZvOR9iDzHqslqwpR87isEmrfxqyWOF7hr7BY6KG0+hVKLoEXMPUJw3ynWuhO"
-  crossorigin="anonymous"></script>
+    integrity="sha384-2huaZvOR9iDzHqslqwpR87isEmrfxqyWOF7hr7BY6KG0+hVKLoEXMPUJw3ynWuhO"
+    crossorigin="anonymous"></script>
   <link rel="stylesheet" href="style.css">
 </head>
 
 <body onload="startWebSocket();">
-  <div id="content" style="opacity: 0;">  <!-- Set initial opacity to 0 -->
+  <main id="content">
     <div id="mainbox">
-      <img crossorigin="anonymous" id="albumimg" src="c4obs.png" width="84px" height="84px">
-      <div style="padding-left: 10px;">
-        <span id="title">Cider4OBS Connector | Connecting...</span><br>
-        <span id="artist">-/-</span><br>
-        <span id="album">-/-</span>
+      <img 
+        crossorigin="anonymous" 
+        id="albumimg" 
+        src="c4obs.png" 
+        width="84" 
+        height="84"
+        alt="Album artwork">
+      <div class="track-info">
+        <span id="title" class="track-title">Cider4OBS Connector | Connecting...</span>
+        <span id="artist" class="track-artist">-/-</span>
+        <span id="album" class="track-album">-/-</span>
       </div>
     </div>
-    <div id="progressBg">
+    <div id="progressBg" role="progressbar" aria-label="Playback progress">
       <div id="progressBar"></div>
     </div>
-  </div>
+  </main>
   <script src="connector.js"></script>
 </body>
 

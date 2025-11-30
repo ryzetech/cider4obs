@@ -1,53 +1,61 @@
+/* Body and root container */
+body { 
+  background-color: rgba(0, 0, 0, 0); 
+  margin: 0;
+  overflow: hidden; 
+}
+
 #content {
   width: 90%;
   background-color: rgba(69, 69, 69, 0);
   border-radius: 5px;
   margin: 10px;
   padding: 10px;
+  opacity: 0;
   transition: opacity 1s;
 }
 
-body { 
-  background-color: rgba(0, 0, 0, 0); 
-  margin: 0px auto; 
-  overflow: hidden; 
-}
-
+/* Layout */
 #mainbox {
   display: flex;
   align-items: center;
-  justify-content: left;
+  justify-content: flex-start;
 }
 
+.track-info {
+  padding-left: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+/* Text styles */
 span {
   text-overflow: ellipsis;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  color:white;
+  color: white;
+  filter: drop-shadow(0px 0px 10px #000000);
 }
 
+.track-title {
+  font-weight: bold;
+}
+
+.track-album {
+  font-style: italic;
+}
+
+/* Album artwork */
 #albumimg {
   border-radius: 5px;
   filter: drop-shadow(0px 0px 10px #000000);
 }
 
-#title {
-  font-weight: bold;
-  filter: drop-shadow(0px 0px 10px #000000);
-}
-
-#artist {
-  filter: drop-shadow(0px 0px 10px #000000);
-}
-
-#album {
-  font-style: italic;
-  filter: drop-shadow(0px 0px 10px #000000);
-}
-
+/* Progress bar */
 #progressBg {
   margin-top: 10px;
   width: 100%;
-  height: auto;
+  height: 10px;
   border-radius: 5px;
   background-color: #55555555;
   filter: drop-shadow(0px 0px 10px #000000);
@@ -55,7 +63,7 @@ span {
 
 #progressBar {
   border-radius: 5px;
-  height: 10px;
+  height: 100%;
   background-color: #70e000;
-  transition: linear width 0.25s;
+  transition: width 0.25s linear;
 }
