@@ -35,7 +35,7 @@ function cacheElements() {
   Object.keys(ELEMENTS).forEach(key => {
     elements[key] = document.getElementById(ELEMENTS[key]);
   });
-  
+
   // Set slide direction attribute on nextQueueBox element
   if (elements.nextQueueBox && settings) {
     const direction = settings.next_in_queue_slide_direction;
@@ -60,8 +60,8 @@ function getSettings() {
     fade_on_stop: getCSSVariable('--fade-on-stop') === '1',
     fade_on_disconnect: getCSSVariable('--fade-on-disconnect') === '1',
     fade_delay: parseInt(getCSSVariable('--fade-delay')) || DEFAULT_FADE_DELAY,
-    fade_disconnect_delay: parseInt(getCSSVariable('--fade-disconnect-delay')) || 
-                          parseInt(getCSSVariable('--fade-delay')) || DEFAULT_FADE_DELAY,
+    fade_disconnect_delay: parseInt(getCSSVariable('--fade-disconnect-delay')) ||
+      parseInt(getCSSVariable('--fade-delay')) || DEFAULT_FADE_DELAY,
     hide_on_idle_connect: getCSSVariable('--hide-on-idle-connect') === '1',
     hide_unless_playing: getCSSVariable('--hide-unless-playing') === '1',
     show_time_labels: getCSSVariable('--show-time-labels') === '1',
@@ -76,11 +76,11 @@ function getSettings() {
  */
 function formatTime(seconds) {
   if (!seconds || isNaN(seconds)) return '0:00';
-  
+
   const hours = Math.floor(seconds / 3600);
   const minutes = Math.floor((seconds % 3600) / 60);
   const secs = Math.floor(seconds % 60);
-  
+
   if (hours > 0) {
     return `${hours}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   }
@@ -114,17 +114,23 @@ function clearTimer(timer) {
  * Update display components with track data
  */
 function updateComponents(data) {
-  elements.title.innerText = data.name;
-  elements.artist.innerText = data.artistName;
-  elements.album.innerText = data.albumName;
-  
+  if (!data) return;
+  elements.title.innerText = data.name || 'No data yet.';
+  elements.artist.innerText = data.artistName || '';
+  elements.album.innerText = data.albumName || '';
+
   // Store current track name for queue matching
-  currentTrackName = data.name;
-  
-  const artworkUrl = data.artwork.url
-    .replace("{w}", data.artwork.width)
-    .replace("{h}", data.artwork.height);
-  elements.albumImg.src = artworkUrl;
+  currentTrackName = data.name || null;
+
+  if (!data.artwork || !data.artwork.url) {
+    elements.albumImg.src = "c4obs.png";
+    return;
+  } else {
+    const artworkUrl = data.artwork.url
+      .replace("{w}", data.artwork.width)
+      .replace("{h}", data.artwork.height);
+    elements.albumImg.src = artworkUrl;
+  }
 }
 
 /**
@@ -134,7 +140,7 @@ async function fetchNowPlaying() {
   try {
     const response = await fetch(`${CIDER_SOCKET_URL}api/v1/playback/now-playing`);
     const data = await response.json();
-    
+
     if (data.status === 'ok' && data.info) {
       updateComponents(data.info);
       return true;
@@ -151,17 +157,17 @@ async function fetchNowPlaying() {
  */
 async function fetchQueue() {
   if (!settings.show_next_in_queue) return;
-  
+
   try {
     const response = await fetch(`${CIDER_SOCKET_URL}api/v1/playback/queue`);
     const queue = await response.json();
-    
+
     if (Array.isArray(queue) && queue.length > 0 && currentTrackName) {
       // Find the currently playing track by matching the track name
-      const currentIndex = queue.findIndex(track => 
+      const currentIndex = queue.findIndex(track =>
         track.attributes && track.attributes.name === currentTrackName
       );
-      
+
       // Get the next track after the currently playing one
       if (currentIndex >= 0 && currentIndex < queue.length - 1) {
         const nextTrack = queue[currentIndex + 1];
@@ -172,7 +178,7 @@ async function fetchQueue() {
         }
       }
     }
-    
+
     hideNextInQueue();
   } catch (error) {
     console.debug('[DEBUG] [API] Failed to fetch queue:', error);
@@ -184,9 +190,11 @@ async function fetchQueue() {
  * Update next in queue display
  */
 function updateNextInQueue(data) {
-  elements.nextTitle.innerText = data.name;
-  elements.nextArtist.innerText = data.artistName;
-  
+  console.debug('[DEBUG] [API] Updating next in queue:', data);
+  if (!data) return;
+  elements.nextTitle.innerText = data.name || '';
+  elements.nextArtist.innerText = data.artistName || '';
+
   const artworkUrl = data.artwork.url
     .replace("{w}", data.artwork.width)
     .replace("{h}", data.artwork.height);
@@ -205,10 +213,10 @@ function hideNextInQueue() {
  */
 function checkQueueReveal(currentTime, duration) {
   if (!settings.show_next_in_queue) return;
-  
+
   const timeRemaining = duration - currentTime;
   const shouldReveal = timeRemaining <= settings.next_in_queue_reveal_time && timeRemaining > 0.5;
-  
+
   if (shouldReveal && elements.nextTitle.innerText !== '-') {
     elements.nextInQueue.classList.add('visible');
   } else {
@@ -233,15 +241,15 @@ function handlePlaybackStateChange(state) {
  */
 async function handleConnect() {
   console.debug('[DEBUG] [Init] Socket.io connection established!');
-  
+
   // Try to fetch current track information
   const hasTrack = await fetchNowPlaying();
-  
+
   // Fetch queue if enabled
   if (settings.show_next_in_queue) {
     await fetchQueue();
   }
-  
+
   if (!hasTrack) {
     elements.title.innerText = "Cider4OBS Connector | Connection established!";
     elements.artist.innerText = "Start playing something!";
@@ -289,27 +297,27 @@ function handlePlaybackEvent({ data, type }) {
       handlePlaybackStateChange(data.state);
       updateComponents(data.attributes);
       break;
-      
+
     case "playbackStatus.nowPlayingItemDidChange":
       updateComponents(data);
       if (settings.show_next_in_queue) {
         fetchQueue();
       }
       break;
-      
+
     case "playbackStatus.playbackTimeDidChange":
-      elements.progressBar.style.width = 
+      elements.progressBar.style.width =
         `${(data.currentPlaybackTime / data.currentPlaybackDuration) * 100}%`;
-      
+
       if (settings.show_time_labels) {
         elements.currentTime.innerText = formatTime(data.currentPlaybackTime);
         elements.duration.innerText = formatTime(data.currentPlaybackDuration);
       }
-      
+
       // Check if next in queue should be revealed
       checkQueueReveal(data.currentPlaybackTime, data.currentPlaybackDuration);
       break;
-      
+
     default:
       console.debug(type, data);
   }
@@ -324,7 +332,7 @@ function startWebSocket() {
     setTimeout(() => {
       settings = getSettings();
       cacheElements();
-      
+
       // Set initial state
       if (settings.hide_unless_playing) {
         elements.content.style.opacity = 0;
