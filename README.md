@@ -26,6 +26,8 @@
 4. The browser will automatically attempt to connect to Cider and reestablish the connection if needed!
 5. To customize appearance and behavior, see the customization section below. Add your custom CSS to the **Custom CSS** box in the OBS browser source settings!
 
+**NEW:** Use the [**Configuration Tool**](https://ryzetech.github.io/cider4obs/configurator.html) to easily generate a customized URL with your preferred settings!
+
 ## 🎨 Customization & Settings
 Not happy with the default appearance and behavior? You can customize everything using the **Custom CSS** box in the OBS browser source settings. Here are some examples to copy and modify:
 
@@ -94,7 +96,31 @@ Customizable elements are `#progressBg, #progressBar`.
 
 ## ⚙️ Configuration Options
 
-You can control the behavior of the Cider4OBS overlay using CSS custom properties. Add these to the `body` selector in the OBS browser source's Custom CSS box:
+You can control the behavior of the Cider4OBS overlay in two ways:
+
+### Method 1: Using the Configurator Tool (Easiest)
+Visit the [**Configuration Tool**](https://ryzetech.github.io/cider4obs/configurator.html) to easily configure all settings through a user-friendly interface. The tool will generate a custom URL with your settings that you can use directly in OBS.
+
+### Method 2: Using URL Parameters
+Add parameters to the URL to override default settings. For example:
+```
+https://ryzetech.github.io/cider4obs/?fade-on-stop=1&show-time-labels=1
+```
+
+Available parameters:
+- `fade-on-stop=1` - Fade out when music pauses
+- `fade-on-disconnect=1` - Fade out when Cider disconnects
+- `fade-delay=2000` - Delay in ms before fading on pause
+- `fade-disconnect-delay=2000` - Delay in ms before fading on disconnect
+- `hide-on-idle-connect=1` - Hide when connected but idle
+- `hide-unless-playing=1` - Only show when actively playing
+- `show-time-labels=1` - Display current time and duration
+- `show-next-in-queue=1` - Show next track in queue
+- `next-in-queue-reveal-time=10` - Seconds before end to show next track
+- `next-in-queue-slide-direction=top` - Animation direction (top/bottom/left/right)
+
+### Method 3: Using CSS Variables (Advanced)
+Add these to the `body` selector in the OBS browser source's Custom CSS box:
 
 ```css
 body {

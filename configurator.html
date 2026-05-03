@@ -1,0 +1,1025 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cider4OBS Configurator</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #f52a5a 0%, #900247 100%);
+      min-height: 100vh;
+      padding: 20px;
+    }
+
+    .main-layout {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    .container {
+      background: white;
+      border-radius: 16px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      padding: 40px;
+      overflow-y: auto;
+      max-height: calc(100vh - 40px);
+    }
+
+    .preview-container {
+      background: #1a1a1a;
+      border-radius: 16px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      padding: 40px;
+      position: sticky;
+      top: 20px;
+      height: fit-content;
+    }
+
+    .preview-label {
+      color: white;
+      font-size: 0.9em;
+      margin-bottom: 20px;
+      text-align: center;
+      opacity: 0.7;
+    }
+
+    .connection-status {
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #666;
+      margin-right: 8px;
+      animation: pulse 2s infinite;
+    }
+
+    .connection-status.connected {
+      background: #4caf50;
+    }
+
+    .connection-status.disconnected {
+      background: #f44336;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+
+    h1 {
+      color: #333;
+      margin-bottom: 10px;
+      font-size: 2em;
+    }
+
+    .subtitle {
+      color: #666;
+      margin-bottom: 30px;
+      font-size: 0.95em;
+    }
+
+    .config-section {
+      margin-bottom: 30px;
+      padding: 20px;
+      background: #f8f9fa;
+      border-radius: 8px;
+    }
+
+    .config-section h2 {
+      color: #444;
+      font-size: 1.3em;
+      margin-bottom: 15px;
+      padding-bottom: 10px;
+      border-bottom: 2px solid #f52a5a;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    label {
+      display: block;
+      font-weight: 600;
+      color: #555;
+      margin-bottom: 8px;
+      font-size: 0.95em;
+    }
+
+    .description {
+      font-size: 0.85em;
+      color: #777;
+      margin-bottom: 8px;
+      font-style: italic;
+    }
+
+    input[type="number"],
+    input[type="text"],
+    input[type="color"],
+    select {
+      width: 100%;
+      padding: 10px 12px;
+      border: 2px solid #ddd;
+      border-radius: 6px;
+      font-size: 0.95em;
+      transition: border-color 0.3s;
+    }
+
+    input[type="color"] {
+      height: 45px;
+      cursor: pointer;
+    }
+
+    input[type="number"]:focus,
+    input[type="text"]:focus,
+    input[type="color"]:focus,
+    select:focus {
+      outline: none;
+      border-color: #f52a5a;
+    }
+
+    .checkbox-group {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    input[type="checkbox"] {
+      width: 20px;
+      height: 20px;
+      cursor: pointer;
+    }
+
+    .checkbox-group label {
+      margin: 0;
+      cursor: pointer;
+    }
+
+    .output-section {
+      background: #f0f0f0;
+      border-radius: 8px;
+      padding: 20px;
+      margin-top: 30px;
+    }
+
+    .output-section h3 {
+      color: #333;
+      margin-bottom: 15px;
+      font-size: 1.2em;
+    }
+
+    #generatedUrl {
+      width: 100%;
+      padding: 15px;
+      background: white;
+      border: 2px solid #f52a5a;
+      border-radius: 6px;
+      font-family: 'Courier New', monospace;
+      font-size: 0.9em;
+      word-break: break-all;
+      color: #333;
+      margin-bottom: 15px;
+      min-height: 80px;
+    }
+
+    .button-group {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    button {
+      background: linear-gradient(135deg, #f52a5a 0%, #900247 100%);
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 6px;
+      font-size: 1em;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(245, 42, 90, 0.4);
+    }
+
+    button:active {
+      transform: translateY(0);
+    }
+
+    .info-box {
+      background: #e3f2fd;
+      border-left: 4px solid #2196f3;
+      padding: 15px;
+      border-radius: 4px;
+      margin-bottom: 20px;
+      font-size: 0.9em;
+      color: #555;
+    }
+
+    .grid-2col {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+
+    /* Preview Styles */
+    #preview {
+      background-color: #ffffff;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Cg fill-rule='evenodd'%3E%3Cg fill='%23000000' fill-opacity='0.4'%3E%3Cpath opacity='.5' d='M96 95h4v1h-4v4h-1v-4h-9v4h-1v-4h-9v4h-1v-4h-9v4h-1v-4h-9v4h-1v-4h-9v4h-1v-4h-9v4h-1v-4h-9v4h-1v-4h-9v4h-1v-4H0v-1h15v-9H0v-1h15v-9H0v-1h15v-9H0v-1h15v-9H0v-1h15v-9H0v-1h15v-9H0v-1h15v-9H0v-1h15v-9H0v-1h15V0h1v15h9V0h1v15h9V0h1v15h9V0h1v15h9V0h1v15h9V0h1v15h9V0h1v15h9V0h1v15h9V0h1v15h4v1h-4v9h4v1h-4v9h4v1h-4v9h4v1h-4v9h4v1h-4v9h4v1h-4v9h4v1h-4v9h4v1h-4v9zm-1 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-9-10h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm9-10v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-9-10h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm9-10v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-9-10h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm9-10v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-9-10h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9z'/%3E%3Cpath d='M6 5V0H5v5H0v1h5v94h1V6h94V5H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+      border-radius: 8px;
+      transform: scale(0.9);
+      transform-origin: top center;
+      padding: 1px;
+    }
+
+    #preview #content {
+      width: 90%;
+      background-color: rgba(69, 69, 69, 0.5);
+      border-radius: 5px;
+      margin: 10px;
+      padding: 10px;
+      opacity: 1;
+      transition: opacity 1s;
+    }
+
+    #preview #mainbox {
+      display: flex;
+      align-items: center;
+      justify-content: flex-start;
+    }
+
+    #preview .track-info {
+      padding-left: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    #preview span {
+      text-overflow: ellipsis;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      color: white;
+      filter: drop-shadow(0px 0px 10px #000000);
+    }
+
+    #preview .track-title {
+      font-weight: bold;
+    }
+
+    #preview .track-artist {
+      font-style: normal;
+    }
+
+    #preview .track-album {
+      font-style: italic;
+    }
+
+    #preview #albumimg {
+      border-radius: 5px;
+      filter: drop-shadow(0px 0px 10px #000000);
+    }
+
+    #preview #progressContainer {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    #preview #progressBg {
+      flex: 1;
+      height: 10px;
+      border-radius: 5px;
+      background-color: #55555555;
+      filter: drop-shadow(0px 0px 10px #000000);
+    }
+
+    #preview #progressBar {
+      border-radius: 5px;
+      height: 100%;
+      width: 60%;
+      background-color: #70e000;
+      transition: width 0.25s linear;
+    }
+
+    #preview .time-label {
+      font-size: 0.85em;
+      min-width: 40px;
+      text-align: center;
+      display: none;
+    }
+
+    /* Next in Queue Preview Styles */
+    #preview #nextInQueue {
+      width: 90%;
+      margin: 0 10px;
+      max-height: 0;
+      opacity: 0;
+      overflow: hidden;
+      transition: max-height 0.5s ease-out, opacity 0.5s ease-out, margin-top 0.5s ease-out;
+      display: none;
+    }
+
+    #preview #nextInQueue.visible {
+      max-height: 200px;
+      opacity: 1;
+      margin-top: 10px;
+      display: block;
+    }
+
+    #preview #nextQueueBox {
+      background-color: rgba(69, 69, 69, 0);
+      margin-left: 15px;
+      border-radius: 5px;
+      padding: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: flex-start;
+      transition: transform 0.5s ease-out;
+      transform: translate(0, 0);
+    }
+
+    #preview #nextInQueue:not(.visible) #nextQueueBox[data-slide="top"] {
+      transform: translateY(-20px);
+    }
+
+    #preview #nextInQueue:not(.visible) #nextQueueBox[data-slide="bottom"] {
+      transform: translateY(20px);
+    }
+
+    #preview #nextInQueue:not(.visible) #nextQueueBox[data-slide="left"] {
+      transform: translateX(-20px);
+    }
+
+    #preview #nextInQueue:not(.visible) #nextQueueBox[data-slide="right"] {
+      transform: translateX(20px);
+    }
+
+    #preview #nextAlbumImg {
+      border-radius: 5px;
+      filter: drop-shadow(0px 0px 10px #000000);
+    }
+
+    #preview .queue-label {
+      font-size: 0.75em;
+      opacity: 0.7;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    @media (max-width: 1200px) {
+      .main-layout {
+        grid-template-columns: 1fr;
+      }
+
+      .preview-container {
+        position: relative;
+        top: 0;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .container {
+        padding: 20px;
+      }
+
+      .grid-2col {
+        grid-template-columns: 1fr;
+      }
+
+      h1 {
+        font-size: 1.5em;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="main-layout">
+    <!-- Configuration Panel -->
+    <div class="container">
+      <h1>🎵 Cider4OBS Configurator</h1>
+      <p class="subtitle">Configure your Cider4OBS display settings and generate a custom URL</p>
+
+      <div class="info-box">
+        <strong>How to use:</strong> Adjust the settings below, then copy the generated URL and use it as a browser source in OBS.
+        The base URL is <code>ryzetech.github.io/cider4obs/</code>
+      </div>
+
+      <form id="configForm">
+        <!-- Appearance Settings -->
+        <div class="config-section">
+          <h2>🎨 Appearance</h2>
+          
+          <div class="grid-2col">
+            <div class="form-group">
+              <label for="textColor">Text Color</label>
+              <p class="description">Color for all text elements</p>
+              <input type="color" id="textColor" name="text-color" value="#ffffff">
+            </div>
+
+            <div class="form-group">
+              <label for="bgColor">Content Background Color</label>
+              <p class="description">Background color of #content element</p>
+              <input type="text" id="bgColor" name="bg-color" placeholder="rgba(69, 69, 69, 0)">
+            </div>
+          </div>
+
+          <div class="grid-2col">
+            <div class="form-group">
+              <label for="bodyBgColor">Body Background Color</label>
+              <p class="description">Overall background color</p>
+              <input type="text" id="bodyBgColor" name="body-bg-color" placeholder="rgba(0, 0, 0, 0)">
+            </div>
+          </div>
+
+          <div class="grid-2col">
+            <div class="form-group">
+              <label for="progressBarColor">Progress Bar Color</label>
+              <p class="description">Color of the active progress bar</p>
+              <input type="color" id="progressBarColor" name="progress-bar-color" value="#70e000">
+            </div>
+
+            <div class="form-group">
+              <label for="progressBgColor">Progress Background Color</label>
+              <p class="description">Background of progress bar</p>
+              <input type="text" id="progressBgColor" name="progress-bg-color" placeholder="rgba(85, 85, 85, 0.33)">
+            </div>
+          </div>
+        </div>
+
+        <!-- Element Visibility -->
+        <div class="config-section">
+          <h2>👁️ Show/Hide Elements</h2>
+          
+          <div class="grid-2col">
+            <div class="form-group">
+              <div class="checkbox-group">
+                <input type="checkbox" id="hideAlbum" name="hide-album">
+                <label for="hideAlbum">Hide Album Name</label>
+              </div>
+              <p class="description">Don't show the album name</p>
+            </div>
+
+            <div class="form-group">
+              <div class="checkbox-group">
+                <input type="checkbox" id="hideArtist" name="hide-artist">
+                <label for="hideArtist">Hide Artist Name</label>
+              </div>
+              <p class="description">Don't show the artist name</p>
+            </div>
+          </div>
+
+          <div class="grid-2col">
+            <div class="form-group">
+              <div class="checkbox-group">
+                <input type="checkbox" id="hideAlbumArt" name="hide-album-art">
+                <label for="hideAlbumArt">Hide Album Artwork</label>
+              </div>
+              <p class="description">Don't show the album artwork</p>
+            </div>
+
+            <div class="form-group">
+              <div class="checkbox-group">
+                <input type="checkbox" id="hideProgressBar" name="hide-progress-bar">
+                <label for="hideProgressBar">Hide Progress Bar</label>
+              </div>
+              <p class="description">Don't show the progress bar</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Fade Settings -->
+      <div class="config-section">
+        <h2>Fade Behavior</h2>
+        
+        <div class="form-group">
+          <div class="checkbox-group">
+            <input type="checkbox" id="fadeOnStop" name="fade-on-stop">
+            <label for="fadeOnStop">Fade on Stop/Pause</label>
+          </div>
+          <p class="description">Fade out the display when playback is paused</p>
+        </div>
+
+        <div class="form-group">
+          <div class="checkbox-group">
+            <input type="checkbox" id="fadeOnDisconnect" name="fade-on-disconnect">
+            <label for="fadeOnDisconnect">Fade on Disconnect</label>
+          </div>
+          <p class="description">Fade out the display when Cider disconnects</p>
+        </div>
+
+        <div class="grid-2col">
+          <div class="form-group">
+            <label for="fadeDelay">Fade Delay (ms)</label>
+            <p class="description">Delay before fading on pause</p>
+            <input type="number" id="fadeDelay" name="fade-delay" min="0" step="100" placeholder="2000">
+          </div>
+
+          <div class="form-group">
+            <label for="fadeDisconnectDelay">Fade Disconnect Delay (ms)</label>
+            <p class="description">Delay before fading on disconnect</p>
+            <input type="number" id="fadeDisconnectDelay" name="fade-disconnect-delay" min="0" step="100" placeholder="2000">
+          </div>
+        </div>
+      </div>
+
+      <!-- Visibility Settings -->
+      <div class="config-section">
+        <h2>Visibility</h2>
+        
+        <div class="form-group">
+          <div class="checkbox-group">
+            <input type="checkbox" id="hideOnIdleConnect" name="hide-on-idle-connect">
+            <label for="hideOnIdleConnect">Hide on Idle Connect</label>
+          </div>
+          <p class="description">Hide display when connected but no track is playing</p>
+        </div>
+
+        <div class="form-group">
+          <div class="checkbox-group">
+            <input type="checkbox" id="hideUnlessPlaying" name="hide-unless-playing">
+            <label for="hideUnlessPlaying">Hide Unless Playing</label>
+          </div>
+          <p class="description">Only show display when actively playing</p>
+        </div>
+      </div>
+
+      <!-- Display Features -->
+      <div class="config-section">
+        <h2>Display Features</h2>
+        
+        <div class="form-group">
+          <div class="checkbox-group">
+            <input type="checkbox" id="showTimeLabels" name="show-time-labels">
+            <label for="showTimeLabels">Show Time Labels</label>
+          </div>
+          <p class="description">Display current time and duration</p>
+        </div>
+
+        <div class="form-group">
+          <div class="checkbox-group">
+            <input type="checkbox" id="showNextInQueue" name="show-next-in-queue">
+            <label for="showNextInQueue">Show Next in Queue</label>
+          </div>
+          <p class="description">Display the next track in the queue</p>
+          <button type="button" onclick="testNextInQueueAnimation()" style="margin-top: 10px; font-size: 0.9em; padding: 8px 16px;">▶️ Test Queue Animation</button>
+        </div>
+
+        <div class="grid-2col">
+          <div class="form-group">
+            <label for="nextInQueueRevealTime">Queue Reveal Time (seconds)</label>
+            <p class="description">When to reveal next track (seconds before end)</p>
+            <input type="number" id="nextInQueueRevealTime" name="next-in-queue-reveal-time" min="1" max="60" placeholder="10">
+          </div>
+
+          <div class="form-group">
+            <label for="nextInQueueSlideDirection">Queue Slide Direction</label>
+            <p class="description">Animation direction for next track</p>
+            <select id="nextInQueueSlideDirection" name="next-in-queue-slide-direction">
+              <option value="">Default (none, fade only)</option>
+              <option value="top">Top</option>
+              <option value="bottom">Bottom</option>
+              <option value="left">Left</option>
+              <option value="right">Right</option>
+            </select>
+          </div>
+        </div>
+      </div>
+      </form>
+
+      <!-- Output Section -->
+      <div class="output-section">
+        <h3>Generated URL</h3>
+        <div id="generatedUrl">https://ryzetech.github.io/cider4obs/</div>
+        <div class="button-group">
+          <button type="button" onclick="copyUrl()">📋 Copy URL</button>
+          <button type="button" onclick="openUrl()">🔗 Open in Browser</button>
+          <button type="button" onclick="resetForm()">🔄 Reset to Defaults</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Preview Panel -->
+    <div class="preview-container" id="previewContainer">
+      <div class="preview-label">
+        <span class="connection-status" id="connectionStatus"></span>
+        <span id="connectionText">🖥️ LIVE PREVIEW</span>
+      </div>
+      <div id="preview">
+        <main id="content">
+          <div id="mainbox">
+            <img 
+              id="albumimg" 
+              src="c4obs.png" 
+              width="84" 
+              height="84"
+              alt="Album artwork">
+            <div class="track-info">
+              <span id="title" class="track-title">Never Gonna Give You Up</span>
+              <span id="artist" class="track-artist">Rick Astley</span>
+              <span id="album" class="track-album">Whenever You Need Somebody</span>
+            </div>
+          </div>
+          <div id="progressContainer">
+            <span id="currentTime" class="time-label">1:23</span>
+            <div id="progressBg">
+              <div id="progressBar"></div>
+            </div>
+            <span id="duration" class="time-label">3:33</span>
+          </div>
+        </main>
+        
+        <div id="nextInQueue">
+          <div id="nextQueueBox">
+            <img 
+              id="nextAlbumImg" 
+              src="c4obs.png" 
+              width="60" 
+              height="60"
+              alt="Next track artwork">
+            <div class="track-info">
+              <span class="queue-label">Next in Queue</span>
+              <span id="nextTitle" class="track-title">Sandstorm</span>
+              <span id="nextArtist" class="track-artist">Darude</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>  <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"
+    integrity="sha384-2huaZvOR9iDzHqslqwpR87isEmrfxqyWOF7hr7BY6KG0+hVKLoEXMPUJw3ynWuhO"
+    crossorigin="anonymous"></script>
+  <script>
+    const BASE_URL = 'https://ryzetech.github.io/cider4obs/';
+    const CIDER_SOCKET_URL = 'http://localhost:10767/';
+    let previewSocket = null;
+    let isConnected = false;
+    let progressInterval = null;
+    let currentProgress = 0;
+    
+    // Mock data for fallback
+    const mockTracks = [
+      {
+        name: 'Never Gonna Give You Up',
+        artistName: 'Rick Astley',
+        albumName: 'Whenever You Need Somebody',
+        artwork: { url: 'c4obs.png', width: 84, height: 84 },
+        duration: 213
+      },
+      {
+        name: 'Sandstorm',
+        artistName: 'Darude',
+        albumName: 'Before the Storm',
+        artwork: { url: 'c4obs.png', width: 84, height: 84 },
+        duration: 224
+      },
+      {
+        name: 'Blue (Da Ba Dee)',
+        artistName: 'Eiffel 65',
+        albumName: 'Europop',
+        artwork: { url: 'c4obs.png', width: 84, height: 84 },
+        duration: 283
+      }
+    ];
+    let currentMockTrackIndex = 0;
+    
+    // Update URL and preview whenever form changes
+    document.getElementById('configForm').addEventListener('change', updateAll);
+    document.getElementById('configForm').addEventListener('input', updateAll);
+
+    function updateAll() {
+      updateUrl();
+      updatePreview();
+    }
+
+    function initPreviewWebSocket() {
+      try {
+        previewSocket = io(CIDER_SOCKET_URL, {
+          transports: ['websocket'],
+          timeout: 3000
+        });
+
+        previewSocket.on('connect', () => {
+          isConnected = true;
+          updateConnectionStatus();
+          console.log('[Preview] Connected to Cider');
+        });
+
+        previewSocket.on('API:Playback', ({ data, type }) => {
+          if (type === 'playbackStatus.playbackStateDidChange') {
+            updatePreviewTrack(data.attributes || data);
+            handlePlaybackState(data.state);
+          }
+          if (type === 'playbackStatus.nowPlayingItemDidChange') {
+            updatePreviewTrack(data);
+          }
+          if (type === 'playbackStatus.playbackTimeDidChange') {
+            updatePreviewProgress(data.currentPlaybackTime, data.currentPlaybackDuration);
+          }
+        });
+
+        previewSocket.on('disconnect', () => {
+          isConnected = false;
+          updateConnectionStatus();
+          console.log('[Preview] Disconnected from Cider');
+        });
+
+        previewSocket.on('connect_error', () => {
+          isConnected = false;
+          updateConnectionStatus();
+          // Fallback to mock data
+          if (!progressInterval) {
+            startMockProgress();
+          }
+        });
+      } catch (error) {
+        console.log('[Preview] Failed to connect, using mock data');
+        isConnected = false;
+        updateConnectionStatus();
+        startMockProgress();
+      }
+    }
+
+    function updateConnectionStatus() {
+      const status = document.getElementById('connectionStatus');
+      const text = document.getElementById('connectionText');
+      if (isConnected) {
+        status.classList.add('connected');
+        status.classList.remove('disconnected');
+        text.textContent = '🖥️ LIVE PREVIEW (Connected)';
+      } else {
+        status.classList.add('disconnected');
+        status.classList.remove('connected');
+        text.textContent = '🖥️ LIVE PREVIEW (Mock Data)';
+      }
+    }
+
+    function handlePlaybackState(state) {
+      const preview = document.getElementById('preview');
+      const content = preview.querySelector('#content');
+      // Don't fade out in preview - always show for configuration purposes
+      content.style.opacity = 1;
+    }
+
+    function updatePreviewTrack(data) {
+      const preview = document.getElementById('preview');
+      if (data.name) preview.querySelector('#title').textContent = data.name;
+      if (data.artistName) preview.querySelector('#artist').textContent = data.artistName;
+      if (data.albumName) preview.querySelector('#album').textContent = data.albumName;
+      if (data.artwork && data.artwork.url) {
+        const url = data.artwork.url.replace('{w}', '84').replace('{h}', '84');
+        preview.querySelector('#albumimg').src = url;
+      }
+    }
+
+    function updatePreviewProgress(current, duration) {
+      const preview = document.getElementById('preview');
+      const percent = (current / duration) * 100;
+      preview.querySelector('#progressBar').style.width = `${percent}%`;
+      preview.querySelector('#currentTime').textContent = formatTime(current);
+      preview.querySelector('#duration').textContent = formatTime(duration);
+    }
+
+    function startMockProgress() {
+      currentProgress = 0;
+      const track = mockTracks[currentMockTrackIndex];
+      progressInterval = setInterval(() => {
+        currentProgress += 0.5;
+        if (currentProgress >= track.duration) {
+          currentProgress = 0;
+        }
+        updatePreviewProgress(currentProgress, track.duration);
+      }, 500);
+    }
+
+    function testNextInQueueAnimation() {
+      const preview = document.getElementById('preview');
+      const nextInQueue = preview.querySelector('#nextInQueue');
+      
+      // Toggle the visible class to show animation
+      if (nextInQueue.classList.contains('visible')) {
+        nextInQueue.classList.remove('visible');
+      } else {
+        // Update next track info
+        currentMockTrackIndex = (currentMockTrackIndex + 1) % mockTracks.length;
+        const nextTrack = mockTracks[currentMockTrackIndex];
+        preview.querySelector('#nextTitle').textContent = nextTrack.name;
+        preview.querySelector('#nextArtist').textContent = nextTrack.artistName;
+        preview.querySelector('#nextAlbumImg').src = nextTrack.artwork.url;
+        
+        // Show with animation
+        nextInQueue.classList.add('visible');
+      }
+    }
+
+    function formatTime(seconds) {
+      if (!seconds || isNaN(seconds)) return '0:00';
+      const mins = Math.floor(seconds / 60);
+      const secs = Math.floor(seconds % 60);
+      return `${mins}:${secs.toString().padStart(2, '0')}`;
+    }
+
+    function updatePreview() {
+      const form = document.getElementById('configForm');
+      const preview = document.getElementById('preview');
+      const previewContainer = document.getElementById('previewContainer');
+      
+      // Text color
+      const textColor = form.querySelector('#textColor').value;
+      preview.querySelectorAll('span').forEach(span => {
+        span.style.color = textColor;
+      });
+      
+      // Background color
+      const bgColor = form.querySelector('#bgColor').value;
+      if (bgColor) {
+        preview.querySelector('#content').style.backgroundColor = bgColor;
+      }
+      
+      // Body background color
+      const bodyBgColor = form.querySelector('#bodyBgColor').value;
+      if (bodyBgColor) {
+        previewContainer.style.background = bodyBgColor;
+      } else {
+        previewContainer.style.background = '#1a1a1a';
+      }
+      
+      // Progress bar colors
+      const progressBarColor = form.querySelector('#progressBarColor').value;
+      preview.querySelector('#progressBar').style.backgroundColor = progressBarColor;
+      
+      const progressBgColor = form.querySelector('#progressBgColor').value;
+      if (progressBgColor) {
+        preview.querySelector('#progressBg').style.backgroundColor = progressBgColor;
+      }
+      
+      // Hide/show elements
+      preview.querySelector('#album').style.display = 
+        form.querySelector('#hideAlbum').checked ? 'none' : 'block';
+      
+      preview.querySelector('#artist').style.display = 
+        form.querySelector('#hideArtist').checked ? 'none' : 'block';
+      
+      preview.querySelector('#albumimg').style.display = 
+        form.querySelector('#hideAlbumArt').checked ? 'none' : 'block';
+      
+      preview.querySelector('#progressContainer').style.display = 
+        form.querySelector('#hideProgressBar').checked ? 'none' : 'flex';
+      
+      // Show time labels
+      const showTimeLabels = form.querySelector('#showTimeLabels').checked;
+      preview.querySelectorAll('.time-label').forEach(label => {
+        label.style.display = showTimeLabels ? 'block' : 'none';
+      });
+      
+      // Show next in queue
+      const showNextInQueue = form.querySelector('#showNextInQueue').checked;
+      const nextInQueue = preview.querySelector('#nextInQueue');
+      if (showNextInQueue) {
+        nextInQueue.style.display = 'block';
+        // Set slide direction
+        const slideDirection = form.querySelector('#nextInQueueSlideDirection').value || 'top';
+        preview.querySelector('#nextQueueBox').setAttribute('data-slide', slideDirection);
+      } else {
+        nextInQueue.style.display = 'none';
+        nextInQueue.classList.remove('visible');
+      }
+    }
+
+    function updateUrl() {
+      const form = document.getElementById('configForm');
+      const params = new URLSearchParams();
+      const cssParams = [];
+      
+      // Appearance parameters (as CSS)
+      const textColor = form.querySelector('#textColor').value;
+      if (textColor !== '#ffffff') {
+        cssParams.push(`span{color:${textColor}}`);
+      }
+      
+      const bgColor = form.querySelector('#bgColor').value;
+      if (bgColor) {
+        cssParams.push(`#content{background-color:${bgColor}}`);
+      }
+      
+      const bodyBgColor = form.querySelector('#bodyBgColor').value;
+      if (bodyBgColor) {
+        cssParams.push(`body{background-color:${bodyBgColor}}`);
+      }
+      
+      const progressBarColor = form.querySelector('#progressBarColor').value;
+      if (progressBarColor !== '#70e000') {
+        cssParams.push(`#progressBar{background-color:${progressBarColor}}`);
+      }
+      
+      const progressBgColor = form.querySelector('#progressBgColor').value;
+      if (progressBgColor) {
+        cssParams.push(`#progressBg{background-color:${progressBgColor}}`);
+      }
+      
+      // Hide element parameters (as CSS)
+      if (form.querySelector('#hideAlbum').checked) {
+        cssParams.push('#album{display:none}');
+      }
+      if (form.querySelector('#hideArtist').checked) {
+        cssParams.push('#artist{display:none}');
+      }
+      if (form.querySelector('#hideAlbumArt').checked) {
+        cssParams.push('#albumimg{display:none}');
+      }
+      if (form.querySelector('#hideProgressBar').checked) {
+        cssParams.push('#progressContainer{display:none}');
+      }
+      
+      // Add CSS as a parameter if there are any custom styles
+      if (cssParams.length > 0) {
+        params.append('css', cssParams.join(''));
+      }
+      
+      // Behavioral checkboxes - only add if checked
+      if (form.querySelector('#fadeOnStop').checked) {
+        params.append('fade-on-stop', '1');
+      }
+      if (form.querySelector('#fadeOnDisconnect').checked) {
+        params.append('fade-on-disconnect', '1');
+      }
+      if (form.querySelector('#hideOnIdleConnect').checked) {
+        params.append('hide-on-idle-connect', '1');
+      }
+      if (form.querySelector('#hideUnlessPlaying').checked) {
+        params.append('hide-unless-playing', '1');
+      }
+      if (form.querySelector('#showTimeLabels').checked) {
+        params.append('show-time-labels', '1');
+      }
+      if (form.querySelector('#showNextInQueue').checked) {
+        params.append('show-next-in-queue', '1');
+      }
+      
+      // Number inputs - only add if not empty
+      const fadeDelay = form.querySelector('#fadeDelay').value;
+      if (fadeDelay) {
+        params.append('fade-delay', fadeDelay);
+      }
+      
+      const fadeDisconnectDelay = form.querySelector('#fadeDisconnectDelay').value;
+      if (fadeDisconnectDelay) {
+        params.append('fade-disconnect-delay', fadeDisconnectDelay);
+      }
+      
+      const queueRevealTime = form.querySelector('#nextInQueueRevealTime').value;
+      if (queueRevealTime) {
+        params.append('next-in-queue-reveal-time', queueRevealTime);
+      }
+      
+      // Select - only add if not default
+      const slideDirection = form.querySelector('#nextInQueueSlideDirection').value;
+      if (slideDirection) {
+        params.append('next-in-queue-slide-direction', slideDirection);
+      }
+      
+      // Build final URL
+      const paramString = params.toString();
+      const finalUrl = paramString ? `${BASE_URL}?${paramString}` : BASE_URL;
+      
+      document.getElementById('generatedUrl').textContent = finalUrl;
+    }
+
+    function copyUrl() {
+      const url = document.getElementById('generatedUrl').textContent;
+      navigator.clipboard.writeText(url).then(() => {
+        alert('URL copied to clipboard!');
+      }).catch(err => {
+        console.error('Failed to copy:', err);
+        alert('Failed to copy URL. Please copy manually.');
+      });
+    }
+
+    function openUrl() {
+      const url = document.getElementById('generatedUrl').textContent;
+      window.open(url, '_blank');
+    }
+
+    function resetForm() {
+      document.getElementById('configForm').reset();
+      updateAll();
+    }
+
+    // Initialize on page load
+    updateAll();
+    initPreviewWebSocket();
+  </script>
+</body>
+</html>
