@@ -1,8 +1,15 @@
 // Constants
 const CIDER_SOCKET_URL = "http://localhost:10767/";
+const API_V1_BASE = "api/v1/";
+const API_V2_BASE = "api/v2/";
 const SETTINGS_LOAD_DELAY = 100;
 const DEFAULT_FADE_DELAY = 2000;
 const DEFAULT_QUEUE_REVEAL_TIME = 10;
+const TOKEN_QUERY_PARAM = "apptoken";
+const TOKEN_STORAGE_KEY = "cider_apptoken";
+const AUTH_REQUEST_APP_NAME = "Cider4OBS Connector";
+const AUTH_REQUEST_SCOPES = "playback,queue";
+const ENABLE_V1_FALLBACK = true;
 
 // Element IDs
 const ELEMENTS = {
@@ -27,6 +34,160 @@ let disconnectTimer;
 let settings;
 let elements = {};
 let currentTrackName = null;
+let appToken = "";
+let authPrompted = false;
+
+/**
+ * Get query parameter value from current URL
+ */
+function getQueryParam(name) {
+  try {
+    const params = new URLSearchParams(window.location.search);
+    return (params.get(name) || "").trim();
+  } catch (error) {
+    console.debug('[DEBUG] [Auth] Failed to parse URL query params:', error);
+    return "";
+  }
+}
+
+/**
+ * Persist token for subsequent overlay reloads
+ */
+function persistToken(token) {
+  if (!token) return;
+
+  try {
+    localStorage.setItem(TOKEN_STORAGE_KEY, token);
+  } catch (error) {
+    console.debug('[DEBUG] [Auth] Failed to persist token:', error);
+  }
+}
+
+/**
+ * Resolve token from URL query parameter first, then local storage
+ */
+function resolveToken() {
+  const queryToken = getQueryParam(TOKEN_QUERY_PARAM);
+
+  if (queryToken) {
+    persistToken(queryToken);
+    return queryToken;
+  }
+
+  try {
+    return (localStorage.getItem(TOKEN_STORAGE_KEY) || "").trim();
+  } catch (error) {
+    console.debug('[DEBUG] [Auth] Failed to read token from localStorage:', error);
+    return "";
+  }
+}
+
+/**
+ * Build Option B deep-link for token consent request
+ */
+function buildAuthDeepLinkUrl() {
+  const appName = encodeURIComponent(AUTH_REQUEST_APP_NAME);
+  const scopes = encodeURIComponent(AUTH_REQUEST_SCOPES);
+  return `cider://request-auth?app-name=${appName}&scopes=${scopes}`;
+}
+
+/**
+ * Launch Cider token consent flow via protocol handler
+ */
+function requestTokenViaDeepLink() {
+  const deepLink = buildAuthDeepLinkUrl();
+  console.debug('[DEBUG] [Auth] Launching deep link:', deepLink);
+  window.location.href = deepLink;
+}
+
+/**
+ * Extract error code from both legacy and structured API errors
+ */
+function getErrorCode(payload) {
+  if (!payload || !payload.error) return null;
+  if (typeof payload.error === 'string') return payload.error;
+  return payload.error.code || null;
+}
+
+/**
+ * Build request headers for authenticated API calls
+ */
+function getAuthHeaders() {
+  return appToken ? { apptoken: appToken } : {};
+}
+
+/**
+ * Fetch and parse JSON from API endpoints
+ */
+async function fetchJson(path, headers = {}) {
+  const response = await fetch(`${CIDER_SOCKET_URL}${path}`, { headers });
+  const payload = await response.json();
+  return { ok: response.ok, status: response.status, payload };
+}
+
+/**
+ * Try v2 first and fall back to v1 for one migration release
+ */
+async function fetchWithFallback(v2Path, v1Path) {
+  if (appToken) {
+    const v2Result = await fetchJson(v2Path, getAuthHeaders());
+    if (v2Result.ok) {
+      return { version: 'v2', ...v2Result };
+    }
+
+    const code = getErrorCode(v2Result.payload);
+    if (
+      ENABLE_V1_FALLBACK &&
+      v1Path &&
+      (code === 'UNAUTHORIZED_APP_TOKEN' || code === 'INSUFFICIENT_SCOPE')
+    ) {
+      console.debug('[DEBUG] [API] Falling back to v1 endpoint due to v2 auth/scope error:', code);
+      const v1Result = await fetchJson(v1Path);
+      return { version: 'v1', ...v1Result };
+    }
+
+    return { version: 'v2', ...v2Result };
+  }
+
+  if (ENABLE_V1_FALLBACK && v1Path) {
+    const v1Result = await fetchJson(v1Path);
+    return { version: 'v1', ...v1Result };
+  }
+
+  return { ok: false, status: 403, payload: { error: { code: 'UNAUTHORIZED_APP_TOKEN' } }, version: 'v2' };
+}
+
+/**
+ * Resolve artwork URLs for both v1 placeholder and v2 pre-resolved formats
+ */
+function resolveArtworkUrl(artwork) {
+  if (!artwork || !artwork.url) return '';
+
+  if (artwork.url.includes('{w}') || artwork.url.includes('{h}') || artwork.url.includes('{f}')) {
+    return artwork.url
+      .replace('{w}', artwork.width || 512)
+      .replace('{h}', artwork.height || 512)
+      .replace('{f}', 'jpg');
+  }
+
+  return artwork.url;
+}
+
+/**
+ * Show token setup guidance once per session when token is missing
+ */
+function promptForTokenIfMissing() {
+  if (appToken || authPrompted) return;
+
+  authPrompted = true;
+  if (elements.title) {
+    elements.title.innerText = "Cider4OBS Connector | Token required for v2";
+    elements.artist.innerText = "Opening Cider auth request (Option B)...";
+    elements.album.innerText = "Approve and provide ?apptoken=... in URL";
+  }
+
+  requestTokenViaDeepLink();
+}
 
 /**
  * Cache DOM elements for better performance
@@ -57,15 +218,15 @@ function getCSSVariable(name) {
  */
 function getSettings() {
   return {
-    fade_on_stop: getCSSVariable('--fade-on-stop') === '1',
-    fade_on_disconnect: getCSSVariable('--fade-on-disconnect') === '1',
+    fade_on_stop: getCSSVariable('--fade-on-stop') == '1',
+    fade_on_disconnect: getCSSVariable('--fade-on-disconnect') == '1',
     fade_delay: parseInt(getCSSVariable('--fade-delay')) || DEFAULT_FADE_DELAY,
     fade_disconnect_delay: parseInt(getCSSVariable('--fade-disconnect-delay')) ||
       parseInt(getCSSVariable('--fade-delay')) || DEFAULT_FADE_DELAY,
-    hide_on_idle_connect: getCSSVariable('--hide-on-idle-connect') === '1',
-    hide_unless_playing: getCSSVariable('--hide-unless-playing') === '1',
-    show_time_labels: getCSSVariable('--show-time-labels') === '1',
-    show_next_in_queue: getCSSVariable('--show-next-in-queue') === '1',
+    hide_on_idle_connect: getCSSVariable('--hide-on-idle-connect') == '1',
+    hide_unless_playing: getCSSVariable('--hide-unless-playing') == '1',
+    show_time_labels: getCSSVariable('--show-time-labels') == '1',
+    show_next_in_queue: getCSSVariable('--show-next-in-queue') == 'block',
     next_in_queue_reveal_time: parseInt(getCSSVariable('--next-in-queue-reveal-time')) || DEFAULT_QUEUE_REVEAL_TIME,
     next_in_queue_slide_direction: getCSSVariable('--next-in-queue-slide-direction').trim() || 'top'
   };
@@ -126,10 +287,8 @@ function updateComponents(data) {
     elements.albumImg.src = "c4obs.png";
     return;
   } else {
-    const artworkUrl = data.artwork.url
-      .replace("{w}", data.artwork.width)
-      .replace("{h}", data.artwork.height);
-    elements.albumImg.src = artworkUrl;
+    const artworkUrl = resolveArtworkUrl(data.artwork);
+    elements.albumImg.src = artworkUrl || "c4obs.png";
   }
 }
 
@@ -138,13 +297,27 @@ function updateComponents(data) {
  */
 async function fetchNowPlaying() {
   try {
-    const response = await fetch(`${CIDER_SOCKET_URL}api/v1/playback/now-playing`);
-    const data = await response.json();
+    const result = await fetchWithFallback(
+      `${API_V2_BASE}playback/now-playing`,
+      `${API_V1_BASE}playback/now-playing`
+    );
 
-    if (data.status === 'ok' && data.info) {
-      updateComponents(data.info);
+    if (result.version === 'v2' && result.ok && result.payload && result.payload.data) {
+      updateComponents(result.payload.data);
       return true;
     }
+
+    if (result.version === 'v1' && result.ok && result.payload.status === 'ok' && result.payload.info) {
+      updateComponents(result.payload.info);
+      return true;
+    }
+
+    const code = getErrorCode(result.payload);
+    if (code === 'UNAUTHORIZED_APP_TOKEN' || code === 'INSUFFICIENT_SCOPE') {
+      console.debug('[DEBUG] [API] Auth/scope issue while fetching now-playing:', code);
+      promptForTokenIfMissing();
+    }
+
     return false;
   } catch (error) {
     console.debug('[DEBUG] [API] Failed to fetch now playing:', error);
@@ -159,24 +332,71 @@ async function fetchQueue() {
   if (!settings.show_next_in_queue) return;
 
   try {
-    const response = await fetch(`${CIDER_SOCKET_URL}api/v1/playback/queue`);
-    const queue = await response.json();
+    const result = await fetchWithFallback(
+      `${API_V2_BASE}queue`,
+      `${API_V1_BASE}playback/queue`
+    );
 
-    if (Array.isArray(queue) && queue.length > 0 && currentTrackName) {
-      // Find the currently playing track by matching the track name
-      const currentIndex = queue.findIndex(track =>
-        track.attributes && track.attributes.name === currentTrackName
-      );
+    if (result.version === 'v2' && result.ok && result.payload && result.payload.data) {
+      const items = Array.isArray(result.payload.data.items) ? result.payload.data.items : [];
+      const position = Number.isInteger(result.payload.data.position) ? result.payload.data.position : -1;
 
-      // Get the next track after the currently playing one
-      if (currentIndex >= 0 && currentIndex < queue.length - 1) {
-        const nextTrack = queue[currentIndex + 1];
-        if (nextTrack.attributes) {
-          updateNextInQueue(nextTrack.attributes);
-          // Don't show immediately, wait for time-based reveal
+      if (items.length > 0) {
+        let nextTrackAttributes = null;
+
+        // Primary strategy: use queue position from v2 payload
+        if (position >= 0 && position < items.length - 1) {
+          const nextItem = items[position + 1];
+          nextTrackAttributes = nextItem && nextItem.track ? nextItem.track.attributes : null;
+        }
+
+        // Fallback strategy: match current track by name
+        if (!nextTrackAttributes && currentTrackName) {
+          const currentIndex = items.findIndex(item =>
+            item.track && item.track.attributes && item.track.attributes.name === currentTrackName
+          );
+          if (currentIndex >= 0 && currentIndex < items.length - 1) {
+            const nextItem = items[currentIndex + 1];
+            nextTrackAttributes = nextItem && nextItem.track ? nextItem.track.attributes : null;
+          }
+        }
+
+        if (nextTrackAttributes) {
+          updateNextInQueue(nextTrackAttributes);
           return;
         }
       }
+
+      hideNextInQueue();
+      return;
+    }
+
+    if (result.version === 'v1' && result.ok) {
+      const queue = result.payload;
+      if (Array.isArray(queue) && queue.length > 0 && currentTrackName) {
+        // Find the currently playing track by matching the track name
+        const currentIndex = queue.findIndex(track =>
+          track.attributes && track.attributes.name === currentTrackName
+        );
+
+        // Get the next track after the currently playing one
+        if (currentIndex >= 0 && currentIndex < queue.length - 1) {
+          const nextTrack = queue[currentIndex + 1];
+          if (nextTrack.attributes) {
+            updateNextInQueue(nextTrack.attributes);
+            return;
+          }
+        }
+      }
+
+      hideNextInQueue();
+      return;
+    }
+
+    const code = getErrorCode(result.payload);
+    if (code === 'UNAUTHORIZED_APP_TOKEN' || code === 'INSUFFICIENT_SCOPE') {
+      console.debug('[DEBUG] [API] Auth/scope issue while fetching queue:', code);
+      promptForTokenIfMissing();
     }
 
     hideNextInQueue();
@@ -195,17 +415,15 @@ function updateNextInQueue(data) {
   elements.nextTitle.innerText = data.name || '';
   elements.nextArtist.innerText = data.artistName || '';
 
-  const artworkUrl = data.artwork.url
-    .replace("{w}", data.artwork.width)
-    .replace("{h}", data.artwork.height);
-  elements.nextAlbumImg.src = artworkUrl;
+  const artworkUrl = resolveArtworkUrl(data.artwork);
+  elements.nextAlbumImg.src = artworkUrl || "c4obs.png";
 }
 
 /**
  * Hide next in queue display
  */
 function hideNextInQueue() {
-  elements.nextInQueue.classList.remove('visible');
+  if (elements.nextInQueue) elements.nextInQueue.classList.remove('visible');
 }
 
 /**
@@ -214,12 +432,22 @@ function hideNextInQueue() {
 function checkQueueReveal(currentTime, duration) {
   if (!settings.show_next_in_queue) return;
 
+  if (!duration || isNaN(duration) || duration <= 0) {
+    elements.nextInQueue.classList.remove('visible');
+    return;
+  }
+
   const timeRemaining = duration - currentTime;
+
+  console.debug(`[DEBUG] [Queue Reveal] Time Remaining: ${timeRemaining.toFixed(2)}s, Reveal Time: ${settings.next_in_queue_reveal_time}s`);
+
   const shouldReveal = timeRemaining <= settings.next_in_queue_reveal_time && timeRemaining > 0.5;
 
-  if (shouldReveal && elements.nextTitle.innerText !== '-') {
+  if (shouldReveal && elements.nextTitle.innerText !== '') {
+    console.debug('[DEBUG] [Queue Reveal] Revealing next in queue');
     elements.nextInQueue.classList.add('visible');
   } else {
+    console.debug('[DEBUG] [Queue Reveal] Hiding next in queue');
     elements.nextInQueue.classList.remove('visible');
   }
 }
@@ -232,7 +460,7 @@ function handlePlaybackStateChange(state) {
     pauseTimer = setOpacity(elements.content, 0, settings.fade_delay);
   } else if (state === "playing") {
     pauseTimer = clearTimer(pauseTimer);
-    elements.content.style.opacity = 1;
+    if (elements.content) elements.content.style.opacity = 1;
   }
 }
 
@@ -241,6 +469,13 @@ function handlePlaybackStateChange(state) {
  */
 async function handleConnect() {
   console.debug('[DEBUG] [Init] Socket.io connection established!');
+  appToken = resolveToken();
+
+  if (!appToken) {
+    promptForTokenIfMissing();
+  } else {
+    console.debug('[DEBUG] [Auth] Token loaded; using v2 API where available.');
+  }
 
   // Try to fetch current track information
   const hasTrack = await fetchNowPlaying();
@@ -306,16 +541,23 @@ function handlePlaybackEvent({ data, type }) {
       break;
 
     case "playbackStatus.playbackTimeDidChange":
-      elements.progressBar.style.width =
-        `${(data.currentPlaybackTime / data.currentPlaybackDuration) * 100}%`;
+      {
+        const currentTime = Number(data.currentPlaybackTime) || 0;
+        const duration = Number(data.currentPlaybackDuration) || 0;
+        const progressPercent = duration > 0
+          ? Math.max(0, Math.min(100, (currentTime / duration) * 100))
+          : 0;
 
-      if (settings.show_time_labels) {
-        elements.currentTime.innerText = formatTime(data.currentPlaybackTime);
-        elements.duration.innerText = formatTime(data.currentPlaybackDuration);
+        elements.progressBar.style.width = `${progressPercent}%`;
+
+        if (settings.show_time_labels) {
+          elements.currentTime.innerText = formatTime(currentTime);
+          elements.duration.innerText = formatTime(duration);
+        }
+
+        // Check if next in queue should be revealed
+        checkQueueReveal(currentTime, duration);
       }
-
-      // Check if next in queue should be revealed
-      checkQueueReveal(data.currentPlaybackTime, data.currentPlaybackDuration);
       break;
 
     default:
@@ -328,6 +570,8 @@ function handlePlaybackEvent({ data, type }) {
  */
 function startWebSocket() {
   try {
+    appToken = resolveToken();
+
     // Pause to allow OBS to inject CSS
     setTimeout(() => {
       settings = getSettings();
@@ -340,9 +584,16 @@ function startWebSocket() {
     }, SETTINGS_LOAD_DELAY);
 
     console.debug('[DEBUG] [Init] Configuring websocket connection...');
-    const CiderApp = io(CIDER_SOCKET_URL, {
+    const socketOptions = {
       transports: ['websocket']
-    });
+    };
+
+    if (appToken) {
+      socketOptions.query = { apptoken: appToken };
+      socketOptions.auth = { apptoken: appToken };
+    }
+
+    const CiderApp = io(CIDER_SOCKET_URL, socketOptions);
 
     CiderApp.on("connect", handleConnect);
     CiderApp.on("API:Playback", handlePlaybackEvent);
